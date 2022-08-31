@@ -1,0 +1,26 @@
+{
+    "id": "558D597F",
+    "path": "~/Dropbox (UFL)/QIIME/Beta Mixture/20220826/R/li_2_raw_func.R",
+    "project_path": null,
+    "type": "r_source",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1661976234020.0,
+    "source_on_save": false,
+    "relative_order": 15,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "64,0",
+        "scrollLine": "41"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1661631343,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1661631343,
+    "read_only": false,
+    "read_only_alternatives": []
+}

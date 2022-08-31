@@ -1,0 +1,101 @@
+library(dirmult)
+
+p_sig<-0.1
+
+dir_par<-dirmult(otu.tab)
+
+est_gamma<-dir_par$gamma
+
+gamma_ki<-t(apply(otu.tab,1,function(x) x+est_gamma))
+
+generate_func<-function(nSub,nTaxa,gamma_ki,R,MgX,SgX=0,nTime) {
+  
+  Pki<-t(apply(gamma_ki,1,function(x) rdirichlet(n=1,alpha = x)))
+  
+  Si<-exp(rnorm(nrow(gamma_ki)))
+  
+  A_ki<-apply(Pki,2,function(x) x*Si)
+  
+  samp_sub<-sample(seq_len(nrow(gamma_ki)),nSub,replace = TRUE)
+  taxa_sub<-sample(seq_len(ncol(gamma_ki)),nTaxa,replace = TRUE)
+  
+  A_ki_samp<-A_ki[samp_sub,taxa_sub]
+  A_ki_list<-list()
+  length(A_ki_list)<-nTime
+  A_ki_list<-lapply(A_ki_list, function(x) x<-A_ki_samp)
+  A_kij<-do.call("rbind",A_ki_list)
+  
+  Xil<-rep(rnorm(nSub),nTime)
+  Xi<-as.numeric(Xil>0)
+  
+  Zi<-sqrt(R^2/(1-R^2))*Xil+rep(rnorm(nSub),nTime)
+  
+  a_k<-rnorm(nTaxa,MgX,SgX)
+  # a_k<-rep(MgZ,nTaxa)
+  # b_k<-rnorm(nTaxa,MgZ,SgZ)
+  # c_k<-rnorm(nTaxa,MgT,SgT)
+  # 
+  # cki<-sapply(c_k,function(x) rnorm(nSub,x,SgT))
+  
+  a_k[(floor(length(a_k)*p_sig)+1):length(a_k)]<-0
+  
+  epi_kij<-rnorm(nSub*nTaxa*nTime,mean = 0, sd = sigma_k)
+  
+  # A_kij<-1
+  
+  A_kij_obs<-A_kij*exp(t(t(Xi)) %*% t(a_k)+epi_kij)
+  
+  P_kij<-t(apply(A_kij_obs,1,function(x) x/sum(x)))
+  
+  D_ij<-MASS::rnegbin(nSub*nTime,mu=10000,theta = 5)
+  
+  C_kij_obs<-data.frame(apply(P_kij,2,function(x) x*D_ij))
+  colnames(C_kij_obs)<-paste0("rawCount",seq_len(nTaxa))
+  
+  return(list(C_kij_obs,Xi))
+}
+
+set.seed(1)
+AA_obs<-generate_func(nSub = 2000, nTaxa = 500, gamma_ki = gamma_ki, R=0.6, MgX=5, nTime = 5)
+
+dataM<-AA_obs[[1]]
+dataC<-data.frame(X=t(t(AA_obs[[2]])))
+
+test_dat<-SummarizedExperiment::SummarizedExperiment(
+  assays=list(MicrobData=t(dataM)), colData=dataC)
+
+
+
+R_file_loc<- "./R/"
+
+R_file<-list.files(R_file_loc)
+for (i in 1:length(R_file)) {
+  source(paste0(R_file_loc,R_file[i]))
+}
+
+
+libname<-c("mathjaxr","expm","foreach",
+           "Matrix","HDCI","parallel","doParallel","future",
+           "glmnet","SummarizedExperiment","S4Vectors","stringr",
+           "DescTools", "MatrixExtra","doRNG")
+
+lapply(libname,require, character.only = TRUE)
+
+results <- IFAA(experiment_dat = test_dat,
+                testCov = c("X"),
+                ctrlCov = NULL,
+                fdrRate = 0.1,
+                nRef = 40,
+                paraJobs = 8)
+
+# trace(IFAA,browser,at=3)
+# untrace(IFAA)
+
+subset(results$full_results,sig_ind==T)
+
+results$metadata$final_ref_taxon
+
+# results$metadata$final_ref_taxon
+
+summary(lm(log(dataM[,426]/dataM[,130])~as.numeric(dataC$X)))
+

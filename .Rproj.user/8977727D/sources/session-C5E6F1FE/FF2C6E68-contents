@@ -1,0 +1,66 @@
+NumericVector li_1_func(NumericVector para_vec, double yi, double m_star,
+                        double x_i, NumericVector confound_vec) {
+  
+  int num_conf=confound_vec.size();
+  int k=(para_vec.size()-9-3*num_conf)/3;
+  double beta_0=para_vec[0];
+  double beta_1=para_vec[1];
+  double beta_2=para_vec[2];
+  double beta_3=para_vec[3];
+  double beta_4=para_vec[4];
+  double beta_5=para_vec[5];
+  
+  double gamma_0=para_vec[6];
+  double gamma_1=para_vec[7];
+  double phi=para_vec[8];
+  double delta=para_vec[9];
+  
+  NumericVector alpha_0_vec=para_vec[seq(10,9+k)];
+  NumericVector alpha_1_vec=para_vec[seq(10+k,9+2*k)];
+  NumericVector psi_vec=para_vec[seq(10+2*k,8+3*k)];
+  
+  NumericVector beta_conf=para_vec[seq(9+3*k,8+3*k+num_conf)];
+  NumericVector alpha_conf=para_vec[seq(9+3*k+num_conf,8+3*k+2*num_conf)];
+  NumericVector gamma_conf=para_vec[seq(9+3*k+2*num_conf,8+3*k+3*num_conf)];
+  
+  
+  psi_vec.push_back(1-sum(para_vec[seq(10+2*k,8+3*k)]));
+  
+  
+  NumericVector mu=expit(alpha_0_vec+alpha_1_vec*x_i+sum(confound_vec*alpha_conf));
+  double delta_i=gamma_0+gamma_1*x_i+sum(confound_vec*gamma_conf);
+  
+  double norm_part=pow(yi-beta_0-beta_1*m_star-beta_2-(beta_3+beta_4)*x_i-
+                         beta_5*x_i*m_star-sum(confound_vec*beta_conf),2)/(2*delta*delta);
+  NumericVector li_1_value= -0.5*log(2*M_PI)-log(delta)-norm_part+
+    (mu*phi-1)*log(m_star)+((1-mu)*phi-1)*log(1-m_star)-log(beta(mu*phi,(1-mu)*phi));
+  
+  NumericVector beta_part=log(beta(mu*phi,(1-mu)*phi));
+  NumericVector li_1_res;
+  if(delta_i>200) {
+    li_1_res=log(psi_vec) - delta_i + li_1_value;
+  } else {
+    li_1_res=log(psi_vec) - log(1+exp(delta_i)) + li_1_value;
+  }
+  
+  
+  // Rcout << " li_1_value " << li_1_value << " norm_part " << norm_part << " mu " << mu <<
+    //   " beta_part " << beta_part << " psi_vec " << psi_vec << 
+    //     "delta_i " << delta_i << "\n";
+  return li_1_res;
+}
+
+
+
+double mu=expit(alpha_0+alpha_1*x_i+sum(confound_vec*alpha_conf));
+double delta_i=gamma_0+gamma_1*x_i+sum(confound_vec*gamma_conf);
+double norm_part=pow(yi-beta_0-beta_1*m_star-beta_2-(beta_3+beta_4)*x_i-beta_5*x_i*m_star-
+                       sum(confound_vec*beta_conf),2)/(2*delta*delta);
+double li_1_value;
+if(delta_i>200) {
+  li_1_value= -0.5*log(2*M_PI)-log(delta)-norm_part-delta_i-log(beta(mu*phi,(1-mu)*phi))+
+    (mu*phi-1)*log(m_star)+((1-mu)*phi-1)*log(1-m_star);
+} else {
+  li_1_value= -0.5*log(2*M_PI)-log(delta)-norm_part-log(1+exp(delta_i))-log(beta(mu*phi,(1-mu)*phi))+
+    (mu*phi-1)*log(m_star)+((1-mu)*phi-1)*log(1-m_star);
+}

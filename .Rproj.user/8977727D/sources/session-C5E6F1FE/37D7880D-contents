@@ -1,0 +1,584 @@
+# setwd("C:/Dropbox (UFL)/papers/MedZIM/R/Dirich_LOD_simu/data")
+realdata=read.csv("VSLprocessed_data.csv",header=T,na.strings = c("",NA))
+
+# meanRA=c()
+# for(i in 1:426){
+#   taxoni=realdata[,paste0("taxon",i)]
+#   meanRA[i]=mean(taxoni[taxoni>0])
+#   }
+# sort(meanRA)
+
+library(DirichletReg) # for rdirichlet()
+
+# install.packages("DirichletReg")
+
+nDataset=100
+SampleSiz=300
+nTaxa=25
+
+rep_ID=list()
+id=list()
+for(i in 1:nDataset){
+  rep_ID[[i]]=i*rep(1,SampleSiz)
+  id[[i]]=seq(SampleSiz)
+}
+
+set.seed(32608)
+
+beta0.tr=c(runif(1,-2,-1.5),rep(0,(nTaxa-1)))
+
+beta1.tr=c(rep(100,1),rep(0,(nTaxa-1)))
+#beta1.tr=rep(0,nTaxa) # for binary mediator model
+
+beta2.tr=c(rep(5,1),rep(0,(nTaxa-1)))
+# beta2.tr=c(6,rep(0,nTaxa-1))
+
+beta3.tr=c(runif(1,4.5,5.5),rep(0,nTaxa-1))
+
+#beta4.tr=c(3,runif(nTaxa-1,-10,10))
+beta4.tr=c(rep(0,1),rep(0,nTaxa-1))
+
+beta5.tr=rep(0,nTaxa)
+delta.tr=rep(1,nTaxa)
+
+alpha0.tr=c(-3,5,runif(nTaxa-2,-2,-1))
+
+# alpha1.tr=c(3,rep(1,2),runif(nTaxa-3,0,1))
+alpha1.tr=c(4,runif(nTaxa-1,0,1))
+
+#alpha1.tr=rep(0,nTaxa)
+
+xi.tr=50
+gamma0.tr=c(rep(-3,1),runif(nTaxa-1,-0.5,0.5))
+gamma1.tr=c(rep(2,1),runif(nTaxa-1,-0.5,0.5))
+
+XandL=realdata[,c("x","libSiz")]
+#XandL[,2]=100
+
+intecptForAlpha=-log(sum(exp(alpha0.tr[-1])))+alpha0.tr[1]
+intecptForAlpha
+ceofForAlpha=alpha0.tr[1]+alpha1.tr[1]-
+  log(sum(exp(alpha0.tr[-1]+alpha1.tr[-1])))-intecptForAlpha
+ceofForAlpha
+
+data.Gen=function(n,beta0.true,beta1.true,beta2.true,beta3.true,
+                  beta4.true,beta5.true,delta.true,alpha0.true,
+                  alpha1.true,xi.true,
+                  gamma0.true,gamma1.true,
+                  XandL,nTaxa,SampleSiz){
+  
+  thetaList=list(beta0.true,beta1.true,beta2.true,beta3.true,
+                 beta4.true,beta5.true,delta.true,
+                 alpha0.true,alpha1.true,xi.true,
+                 gamma0.true,gamma1.true)
+  thetaMat=do.call(cbind,thetaList)
+  
+  #print(thetaMat[1,])
+  
+  # bmV=list()
+  dat=list()
+  #set.seed(1032018)
+  # x00=0
+  # x10=0
+  num_nz<-0
+  num_nz_1<-0
+  for(i in 1:n){
+    #x=sample(XandL[,1],1)
+    #x=rnorm(1)
+    x=rbinom(1,1,0.5)
+    # Generate DELTA
+    DEL=exp(gamma0.true+gamma1.true*x)/(1+exp(gamma0.true+gamma1.true*x))
+    # bm=rbinom(length(DEL),1,1-DEL)
+    bm=rbinom(length(DEL),1,1-DEL)
+    
+    # bm[-1]=1
+    
+    # bmV[[i]]=bm
+    # bm=1
+    
+    ind=0+(bm>0)
+    #cat("bm=",bm,"\n")
+    #cat("DEL:",DEL,"\n")
+    
+    # Generate mu
+    # meanAll=exp(alpha0.true+alpha1.true*x)/(1 + sum(exp(alpha0.true+alpha1.true*x)))
+    # scaleAll=meanAll*xi.true
+    # tru.m=bm*rdirichlet(1,scaleAll)
+    # 
+    
+    ##### update form #####
+    non_zero_loc<-which(bm==1)
+    alpha0_non_zero<-alpha0.true[non_zero_loc]
+    alpha1_non_zero<-alpha1.true[non_zero_loc]
+    
+    meanAll=exp(alpha0_non_zero[-length(alpha0_non_zero)]+alpha1_non_zero[-length(alpha0_non_zero)]*x)/
+      (1+sum(exp(alpha0_non_zero[-length(alpha0_non_zero)]+alpha1_non_zero[-length(alpha0_non_zero)]*x)))
+    meanAll[length(alpha0_non_zero)]<-1-sum(meanAll)
+    scaleAll=meanAll*xi.true
+    tru.m_non_zero=rdirichlet(1,scaleAll)
+    tru.m<-numeric(nTaxa)
+    tru.m[non_zero_loc]<-tru.m_non_zero
+    
+    
+    
+    
+    
+    # scaleAll=meanAll*xi.true
+    # tru.m=bm*rdirichlet(1,scaleAll)
+    
+    
+    # if (bm[1]==1 & (tru.m[1]%in%c(0,1))){
+    #   cat("tru.m:",tru.m,"\n")
+    #   cat("bm",bm,"\n")
+    #   cat("meanall",meanAll,"\n")
+    #   cat("scaleAll[1]:",scaleAll[1],"\n")
+    # }
+    
+    # Generate Y  
+    Xbet=sum(beta0.true+beta1.true*tru.m+beta2.true*ind+beta3.true*x+
+               beta4.true*x*ind+beta5.true*x*tru.m)
+    
+    eps=rnorm(1,0,delta.true)
+    y=Xbet+eps
+    #cat("y=",y,"\n")
+    
+    Li=sample(XandL[,2], 1)
+    
+    # Li<-Li/100
+    
+    R<-rep(1,length(tru.m))
+    
+
+    R=(Li*tru.m>1)
+    #R=1
+
+    M=tru.m*R
+    # M=tru.m
+    fz_ind<-R==0 & tru.m>0
+    num_nz<-num_nz+sum(fz_ind)
+    num_nz_1<-num_nz_1+fz_ind[1]
+    # if(R[1]==0 & tru.m[1]>0){
+    #   if(x==1)x10=x10+1
+    #   if(x==0)x00=x00+1
+    # }
+    rawCounts=floor(M*Li)
+    dat[[i]]=c(x,Li,y,M,tru.m,rawCounts)
+  }
+  
+  cat("num_fz:",num_nz,"\n")
+  cat("num_fz_1:",num_nz_1,"\n")
+  
+  # cat("x00:",x00,"\n")
+  
+  # bbmv = do.call(rbind, bmV)
+  #cat("mean(bbmv)",colMeans(bbmv),"\n")
+  
+  dataMat=do.call(rbind, dat)
+  data=data.frame(dataMat)
+  
+  # cat("colnames(data):",colnames(data),"\n")
+  
+  colnames(data)[1:2]=c("x","libSize")
+  yNames=paste0("y",1)
+  #cat("yNames:",yNames,"\n")
+  colnames(data)[3]=yNames
+  
+  taxaNames=paste0("taxon",seq(nTaxa))
+  #cat("taxaNames:",taxaNames,"\n")
+  colnames(data)[4:(3+nTaxa)]=taxaNames
+  
+  truTaxaNames=paste0("truTaxon",seq(nTaxa))
+  colnames(data)[(4+nTaxa):(3+nTaxa*2)]=truTaxaNames
+  
+  rawCountNames=paste0("rawCount",seq(nTaxa))
+  colnames(data)[(4+nTaxa*2):(3+nTaxa*3)]=rawCountNames
+  
+  data$rep_ID=unlist(rep_ID)
+  data$id=unlist(id)
+  
+  #print(data[1:5,])
+  # write.csv(data,"Dir_simu_data.csv",row.names=F)
+  
+  dataList=list(data=data,thetaMat=thetaMat,
+                nTaxa=nTaxa,SampleSiz=SampleSiz)
+  # save(dataList,file="Dirich_simu_data.RData")
+  return(dataList)
+}
+
+dataList=data.Gen(n=nDataset*SampleSiz,beta0.tr,beta1.tr,beta2.tr,
+                  beta3.tr,beta4.tr,beta5.tr,delta.tr,alpha0.tr,
+                  alpha1.tr,xi.tr,gamma0.tr,gamma1.tr,XandL,nTaxa,SampleSiz)
+
+summary(dataList$data$taxon1)
+
+hist(dataList$data$taxon1[dataList$data$taxon1!=0])
+mean(dataList$data$taxon1[dataList$data$taxon1!=0])
+
+
+
+sum(dataList$data$taxon1==0)/length(dataList$data$taxon1)
+
+save(dataList,file = "./20210519/data/20210521/25taxon_300sample_1_mediator.Rdata")
+
+
+mean(dataList$data$taxon1[dataList$data$taxon1!=0])
+# 
+# 
+# ########
+# for (i in 1:10) {
+#   beta2.tr=c(rep(0.1*i,1),rep(0,(nTaxa-1)))
+#   
+#   
+#   dataList=data.Gen(n=nDataset*SampleSiz,beta0.tr,beta1.tr,beta2.tr,
+#                     beta3.tr,beta4.tr,beta5.tr,delta.tr,alpha0.tr,
+#                     alpha1.tr,xi.tr,gamma0.tr,gamma1.tr,XandL,nTaxa,SampleSiz)
+#   
+#   save_file_name<-paste0("./data/20210204_3/300taxon_300sample_1_mediator_",i,".Rdata")
+#   
+#   save(dataList,file = save_file_name)
+# }
+# 
+# 
+# 
+# 
+# 
+# #### 500 taxon ####
+# 
+# nDataset=100
+# SampleSiz=300
+# nTaxa=500
+# 
+# rep_ID=list()
+# id=list()
+# for(i in 1:nDataset){
+#   rep_ID[[i]]=i*rep(1,SampleSiz)
+#   id[[i]]=seq(SampleSiz)
+# }
+# 
+# set.seed(32608)
+# 
+# beta0.tr=c(runif(1,-2,-1.5),rep(0,(nTaxa-1)))
+# 
+# beta1.tr=c(rep(43,1),rep(0,(nTaxa-1)))
+# #beta1.tr=rep(0,nTaxa) # for binary mediator model
+# 
+# beta2.tr=c(rep(5,1),rep(0,(nTaxa-1)))
+# # beta2.tr=c(6,rep(0,nTaxa-1))
+# 
+# beta3.tr=c(runif(1,4.5,5.5),rep(0,nTaxa-1))
+# 
+# #beta4.tr=c(3,runif(nTaxa-1,-10,10))
+# beta4.tr=c(rep(0,1),rep(0,nTaxa-1))
+# 
+# beta5.tr=rep(0,nTaxa)
+# delta.tr=rep(1,nTaxa)
+# 
+# alpha0.tr=c(0,1.5,runif(nTaxa-2,1,2))
+# 
+# # alpha1.tr=c(3,rep(1,2),runif(nTaxa-3,0,1))
+# alpha1.tr=c(4,rep(7,1),runif(nTaxa-2,-2,-1))
+# 
+# #alpha1.tr=rep(0,nTaxa)
+# 
+# xi.tr=50
+# gamma0.tr=c(rep(-2,1),runif(nTaxa-1,-0.5,0.5))
+# gamma1.tr=c(rep(1,1),runif(nTaxa-1,0,2))
+# 
+# XandL=realdata[,c("x","libSiz")]
+# #XandL[,2]=100
+# 
+# intecptForAlpha=-log(sum(exp(alpha0.tr[-1])))+alpha0.tr[1]
+# intecptForAlpha
+# ceofForAlpha=alpha0.tr[1]+alpha1.tr[1]-
+#   log(sum(exp(alpha0.tr[-1]+alpha1.tr[-1])))-intecptForAlpha
+# ceofForAlpha
+# 
+# 
+# 
+# dataList=data.Gen(n=nDataset*SampleSiz,beta0.tr,beta1.tr,beta2.tr,
+#                   beta3.tr,beta4.tr,beta5.tr,delta.tr,alpha0.tr,
+#                   alpha1.tr,xi.tr,gamma0.tr,gamma1.tr,XandL,nTaxa,SampleSiz)
+# 
+# 
+# sum(dataList$data$taxon1==0)/length(dataList$data$taxon1)
+# 
+# save(dataList,file = "./data/20210220/500taxon_300sample_1_mediator_2.Rdata")
+# 
+# 
+# mean(dataList$data$taxon1[dataList$data$taxon1!=0])
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# ######### 100 taxon ######
+# 
+# 
+# nDataset=100
+# SampleSiz=300
+# nTaxa=100
+# 
+# rep_ID=list()
+# id=list()
+# for(i in 1:nDataset){
+#   rep_ID[[i]]=i*rep(1,SampleSiz)
+#   id[[i]]=seq(SampleSiz)
+# }
+# 
+# set.seed(32608)
+# 
+# beta0.tr=c(runif(1,-2,-1.5),rep(0,(nTaxa-1)))
+# 
+# beta1.tr=c(rep(40,1),rep(0,(nTaxa-1)))
+# #beta1.tr=rep(0,nTaxa) # for binary mediator model
+# 
+# beta2.tr=c(rep(3,1),rep(0,(nTaxa-1)))
+# # beta2.tr=c(6,rep(0,nTaxa-1))
+# 
+# beta3.tr=c(runif(1,4.5,5.5),rep(0,nTaxa-1))
+# 
+# #beta4.tr=c(3,runif(nTaxa-1,-10,10))
+# beta4.tr=c(rep(0,1),rep(0,nTaxa-1))
+# 
+# beta5.tr=rep(0,nTaxa)
+# delta.tr=rep(1,nTaxa)
+# 
+# alpha0.tr=c(-1,1.5,runif(nTaxa-2,1,2))
+# 
+# # alpha1.tr=c(3,rep(1,2),runif(nTaxa-3,0,1))
+# alpha1.tr=c(1,rep(3.5,1),runif(nTaxa-2,-2,-1))
+# 
+# #alpha1.tr=rep(0,nTaxa)
+# 
+# xi.tr=50
+# gamma0.tr=c(rep(-2,1),runif(nTaxa-1,-0.5,0.5))
+# gamma1.tr=c(rep(1,1),runif(nTaxa-1,0,2))
+# 
+# XandL=realdata[,c("x","libSiz")]
+# #XandL[,2]=100
+# 
+# intecptForAlpha=-log(sum(exp(alpha0.tr[-1])))+alpha0.tr[1]
+# intecptForAlpha
+# ceofForAlpha=alpha0.tr[1]+alpha1.tr[1]-
+#   log(sum(exp(alpha0.tr[-1]+alpha1.tr[-1])))-intecptForAlpha
+# ceofForAlpha
+# 
+# 
+# 
+# dataList=data.Gen(n=nDataset*SampleSiz,beta0.tr,beta1.tr,beta2.tr,
+#                   beta3.tr,beta4.tr,beta5.tr,delta.tr,alpha0.tr,
+#                   alpha1.tr,xi.tr,gamma0.tr,gamma1.tr,XandL,nTaxa,SampleSiz)
+# 
+# 
+# sum(dataList$data$taxon1==0)/length(dataList$data$taxon1)
+# 
+# save(dataList,file = "./data/20210221_2/100taxon_300sample_1_mediator_6.Rdata")
+# 
+# 
+# mean(dataList$data$taxon1[dataList$data$taxon1!=0])
+# 
+# ########
+# 
+# nDataset=100
+# SampleSiz=300
+# nTaxa=50
+# 
+# rep_ID=list()
+# id=list()
+# for(i in 1:nDataset){
+#   rep_ID[[i]]=i*rep(1,SampleSiz)
+#   id[[i]]=seq(SampleSiz)
+# }
+# 
+# set.seed(32608)
+# 
+# beta0.tr=c(runif(1,-2,-1.5),rep(0,(nTaxa-1)))
+# 
+# beta1.tr=c(rep(30,1),rep(0,(nTaxa-1)))
+# #beta1.tr=rep(0,nTaxa) # for binary mediator model
+# 
+# beta2.tr=c(rep(2,1),rep(0,(nTaxa-1)))
+# # beta2.tr=c(6,rep(0,nTaxa-1))
+# 
+# beta3.tr=c(runif(1,4.5,5.5),rep(0,nTaxa-1))
+# 
+# #beta4.tr=c(3,runif(nTaxa-1,-10,10))
+# beta4.tr=c(rep(0,1),rep(0,nTaxa-1))
+# 
+# beta5.tr=rep(0,nTaxa)
+# delta.tr=rep(1,nTaxa)
+# 
+# alpha0.tr=c(-1,1.5,runif(nTaxa-2,1,2))
+# 
+# # alpha1.tr=c(3,rep(1,2),runif(nTaxa-3,0,1))
+# alpha1.tr=c(1,rep(3,1),runif(nTaxa-2,-2,-1))
+# 
+# #alpha1.tr=rep(0,nTaxa)
+# 
+# xi.tr=50
+# gamma0.tr=c(rep(-2,1),runif(nTaxa-1,-0.5,0.5))
+# gamma1.tr=c(rep(1,1),runif(nTaxa-1,0,2))
+# 
+# XandL=realdata[,c("x","libSiz")]
+# #XandL[,2]=100
+# 
+# intecptForAlpha=-log(sum(exp(alpha0.tr[-1])))+alpha0.tr[1]
+# intecptForAlpha
+# ceofForAlpha=alpha0.tr[1]+alpha1.tr[1]-
+#   log(sum(exp(alpha0.tr[-1]+alpha1.tr[-1])))-intecptForAlpha
+# ceofForAlpha
+# 
+# 
+# 
+# dataList=data.Gen(n=nDataset*SampleSiz,beta0.tr,beta1.tr,beta2.tr,
+#                   beta3.tr,beta4.tr,beta5.tr,delta.tr,alpha0.tr,
+#                   alpha1.tr,xi.tr,gamma0.tr,gamma1.tr,XandL,nTaxa,SampleSiz)
+# 
+# 
+# sum(dataList$data$taxon1==0)/length(dataList$data$taxon1)
+# 
+# save(dataList,file = "./data/20210225_4/50taxon_300sample_1_mediator_2.Rdata")
+# 
+# 
+# mean(dataList$data$taxon1[dataList$data$taxon1!=0])
+# #######
+# 
+# nDataset=100
+# SampleSiz=300
+# nTaxa=25
+# 
+# rep_ID=list()
+# id=list()
+# for(i in 1:nDataset){
+#   rep_ID[[i]]=i*rep(1,SampleSiz)
+#   id[[i]]=seq(SampleSiz)
+# }
+# 
+# set.seed(32608)
+# 
+# beta0.tr=c(runif(1,-2,-1.5),rep(0,(nTaxa-1)))
+# 
+# beta1.tr=c(rep(50,1),rep(0,(nTaxa-1)))
+# #beta1.tr=rep(0,nTaxa) # for binary mediator model
+# 
+# beta2.tr=c(rep(2,1),rep(0,(nTaxa-1)))
+# # beta2.tr=c(6,rep(0,nTaxa-1))
+# 
+# beta3.tr=c(runif(1,4.5,5.5),rep(0,nTaxa-1))
+# 
+# #beta4.tr=c(3,runif(nTaxa-1,-10,10))
+# beta4.tr=c(rep(0,1),rep(0,nTaxa-1))
+# 
+# beta5.tr=rep(0,nTaxa)
+# delta.tr=rep(1,nTaxa)
+# 
+# alpha0.tr=c(-2,1.5,runif(nTaxa-2,1,2))
+# 
+# # alpha1.tr=c(3,rep(1,2),runif(nTaxa-3,0,1))
+# alpha1.tr=c(2,rep(3.5,1),runif(nTaxa-2,-2,-1))
+# 
+# #alpha1.tr=rep(0,nTaxa)
+# 
+# xi.tr=50
+# gamma0.tr=c(rep(-1.5,1),runif(nTaxa-1,-0.5,0.5))
+# gamma1.tr=c(rep(1,1),runif(nTaxa-1,0,2))
+# 
+# XandL=realdata[,c("x","libSiz")]
+# #XandL[,2]=100
+# 
+# intecptForAlpha=-log(sum(exp(alpha0.tr[-1])))+alpha0.tr[1]
+# intecptForAlpha
+# ceofForAlpha=alpha0.tr[1]+alpha1.tr[1]-
+#   log(sum(exp(alpha0.tr[-1]+alpha1.tr[-1])))-intecptForAlpha
+# ceofForAlpha
+# 
+# 
+# 
+# dataList=data.Gen(n=nDataset*SampleSiz,beta0.tr,beta1.tr,beta2.tr,
+#                   beta3.tr,beta4.tr,beta5.tr,delta.tr,alpha0.tr,
+#                   alpha1.tr,xi.tr,gamma0.tr,gamma1.tr,XandL,nTaxa,SampleSiz)
+# 
+# 
+# sum(dataList$data$taxon1==0)/length(dataList$data$taxon1)
+# 
+# save(dataList,file = "./data/20210225_7/25taxon_300sample_1_mediator_5.Rdata")
+# 
+# 
+# mean(dataList$data$taxon1[dataList$data$taxon1!=0])
+# 
+# 
+# 
+# #####
+# 
+# nDataset=100
+# SampleSiz=300
+# nTaxa=10
+# 
+# rep_ID=list()
+# id=list()
+# for(i in 1:nDataset){
+#   rep_ID[[i]]=i*rep(1,SampleSiz)
+#   id[[i]]=seq(SampleSiz)
+# }
+# 
+# set.seed(32608)
+# 
+# beta0.tr=c(runif(1,-2,-1.5),rep(0,(nTaxa-1)))
+# 
+# beta1.tr=c(rep(60,1),rep(0,(nTaxa-1)))
+# #beta1.tr=rep(0,nTaxa) # for binary mediator model
+# 
+# beta2.tr=c(rep(2,1),rep(0,(nTaxa-1)))
+# # beta2.tr=c(6,rep(0,nTaxa-1))
+# 
+# beta3.tr=c(runif(1,4.5,5.5),rep(0,nTaxa-1))
+# 
+# #beta4.tr=c(3,runif(nTaxa-1,-10,10))
+# beta4.tr=c(rep(0,1),rep(0,nTaxa-1))
+# 
+# beta5.tr=rep(0,nTaxa)
+# delta.tr=rep(1,nTaxa)
+# 
+# alpha0.tr=c(-3,1.5,runif(nTaxa-2,1,2))
+# 
+# # alpha1.tr=c(3,rep(1,2),runif(nTaxa-3,0,1))
+# alpha1.tr=c(1,rep(1,1),runif(nTaxa-2,-2,-1))
+# 
+# #alpha1.tr=rep(0,nTaxa)
+# 
+# xi.tr=50
+# gamma0.tr=c(rep(-1.5,1),runif(nTaxa-1,-0.5,0.5))
+# gamma1.tr=c(rep(1,1),runif(nTaxa-1,0,2))
+# 
+# XandL=realdata[,c("x","libSiz")]
+# #XandL[,2]=100
+# 
+# intecptForAlpha=-log(sum(exp(alpha0.tr[-1])))+alpha0.tr[1]
+# intecptForAlpha
+# ceofForAlpha=alpha0.tr[1]+alpha1.tr[1]-
+#   log(sum(exp(alpha0.tr[-1]+alpha1.tr[-1])))-intecptForAlpha
+# ceofForAlpha
+# 
+# 
+# 
+# dataList=data.Gen(n=nDataset*SampleSiz,beta0.tr,beta1.tr,beta2.tr,
+#                   beta3.tr,beta4.tr,beta5.tr,delta.tr,alpha0.tr,
+#                   alpha1.tr,xi.tr,gamma0.tr,gamma1.tr,XandL,nTaxa,SampleSiz)
+# 
+# 
+# sum(dataList$data$taxon1==0)/length(dataList$data$taxon1)
+# 
+# save(dataList,file = "./data/20210228/10taxon_300sample_1_mediator_4.Rdata")
+# 
+# 
+# mean(dataList$data$taxon1[dataList$data$taxon1!=0])
+# 
+# 
+

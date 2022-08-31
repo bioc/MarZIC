@@ -1,0 +1,867 @@
+sourceCpp("Q_theta_cpp_include_nz.cpp")
+
+
+expit<-function(x) {
+  exp(x)/(1+exp(x))
+}
+
+expect_M_x<-function(psi,delta_1,mu) {
+  res<-sum(psi*(1-expit(delta_1))*expit(mu))
+  return(res)
+}
+
+mediation_effect_cal<-function(para_vec,x_1,x_2) {
+  k<-(length(para_vec)-9)/3
+  beta_0<-para_vec[1]
+  beta_1<-para_vec[2]
+  beta_2<-para_vec[3]
+  beta_3<-para_vec[4]
+  beta_4<-para_vec[5]
+  beta_5<-para_vec[6]
+  
+  gamma_0<-para_vec[7]
+  gamma_1<-para_vec[8]
+  phi<-para_vec[9]
+  delta<-para_vec[10]
+  
+  alpha_0_vec<-para_vec[11:(10+k)]
+  alpha_1_vec<-para_vec[(11+k):(10+2*k)]
+  
+  if (k==1) {
+    psi_vec<-1
+  } else {
+    psi_temp<-para_vec[(11+2*k):(9+3*k)]
+    psi_vec<-c(psi_temp,1-sum(psi_temp))
+  }
+  
+  
+  
+  delta_1_x2<-gamma_0+gamma_1*x_2
+  mu_x2<-alpha_0_vec+alpha_1_vec*x_2
+  # mu_2_x2<-alpha_02+alpha_12*x_2
+  
+  delta_1_x1<-gamma_0+gamma_1*x_1
+  mu_x1<-alpha_0_vec+alpha_1_vec*x_1
+  # mu_2_x1<-alpha_02+alpha_12*x_1
+  
+  NIE_1<-(beta_1+beta_5*x_2)*(expect_M_x(psi_vec,delta_1_x2,mu_x2)-expect_M_x(psi_vec,delta_1_x1,mu_x1))
+  NIE_2<-(beta_2+beta_4*x_2)*(expit(delta_1_x1)-expit(delta_1_x2))
+  NDE<-beta_3*(x_2-x_1)+beta_4*(x_2-x_1)*(1-expit(delta_1_x1))+beta_5*(x_2-x_1)*expect_M_x(psi_vec,delta_1_x1,mu_x1)
+  NIE<-NIE_1+NIE_2
+  
+  return(c(NIE_1,NIE_2,NDE,NIE))
+}
+
+
+li_1_raw_func<-function(para_vec,yi,m_star,x_i) {
+  k<-(length(para_vec)-9)/3
+  beta_0<-para_vec[1]
+  beta_1<-para_vec[2]
+  beta_2<-para_vec[3]
+  beta_3<-para_vec[4]
+  beta_4<-para_vec[5]
+  beta_5<-para_vec[6]
+  
+  gamma_0<-para_vec[7]
+  gamma_1<-para_vec[8]
+  phi<-para_vec[9]
+  delta<-para_vec[10]
+  
+  alpha_0_vec<-para_vec[11:(10+k)]
+  alpha_1_vec<-para_vec[(11+k):(10+2*k)]
+  
+  if (k==1) {
+    psi_vec<-1
+  } else {
+    psi_temp<-para_vec[(11+2*k):(9+3*k)]
+    psi_vec<-c(psi_temp,1-sum(psi_temp))
+  }
+  
+  mu_1<-expit(alpha_0_vec+alpha_1_vec*x_i)
+  delta_i<-expit(gamma_0+gamma_1*x_i)
+  norm_part<-(yi-beta_0-beta_1*m_star-beta_2-(beta_3+beta_4)*x_i-beta_5*x_i*m_star)^2/(2*delta^2)
+  beta_part<-log((1-delta_i)*sum(psi_vec*dbeta(m_star,mu_1*phi,(1-mu_1)*phi)))
+  lh_value<- -0.5*log(2*pi)-log(delta) - norm_part + beta_part
+  return(lh_value)
+}
+
+
+li_2_raw_func<-function(para_vec,yi,x_i,l_i) {
+  k<-(length(para_vec)-9)/3
+  beta_0<-para_vec[1]
+  beta_1<-para_vec[2]
+  beta_2<-para_vec[3]
+  beta_3<-para_vec[4]
+  beta_4<-para_vec[5]
+  beta_5<-para_vec[6]
+  
+  gamma_0<-para_vec[7]
+  gamma_1<-para_vec[8]
+  phi<-para_vec[9]
+  delta<-para_vec[10]
+  
+  alpha_0_vec<-para_vec[11:(10+k)]
+  alpha_1_vec<-para_vec[(11+k):(10+2*k)]
+  
+  if (k==1) {
+    psi_vec<-1
+  } else {
+    psi_temp<-para_vec[(11+2*k):(9+3*k)]
+    psi_vec<-c(psi_temp,1-sum(psi_temp))
+  }
+  
+  mu_2<-expit(alpha_0_vec+alpha_1_vec*x_i)
+  delta_i<-expit(gamma_0+gamma_1*x_i)
+  norm_part<-exp(-(yi-beta_0-(beta_3)*x_i)^2/(2*delta^2))
+  
+  int_const_0<-exp(-(yi-beta_0-beta_2-(beta_3+beta_4)*x_i)^2/(2*delta^2))
+  
+  int_const_li<-exp(-(yi-beta_0-beta_1/l_i-beta_2-(beta_3+beta_4)*x_i-beta_5*x_i/l_i)^2/(2*delta^2))
+  
+  const_part<-((int_const_0+int_const_li)/2)*(1-delta_i)
+  
+  int_part<-sum(psi_vec*pbeta(1/l_i,mu_2*phi,(1-mu_2)*phi))
+  
+  # beta_part<-log((1-delta_i)*sum(psi_vec*dbeta(mu_1*phi,(1-mu_1)*phi)))
+  lh_value<- -0.5*log(2*pi)-log(delta) + log(delta_i*norm_part+const_part*int_part)
+  return(lh_value)
+}
+
+li_total_raw<-function(para_vec,yi_vec,obs_m_vec,xi_vec,li_vec) {
+  lk_value_vec<-numeric(length(yi_vec))
+  for (i in 1:length(yi_vec)) {
+    yi<-yi_vec[i]
+    obs_m<-obs_m_vec[i]
+    xi<-xi_vec[i]
+    li<-li_vec[i]
+    
+    if (obs_m>1e-50) {
+      lk_value_temp<-li_1_raw_func(para_vec,yi,obs_m,xi)
+      lk_value_vec[i]<-lk_value_temp
+    } else if (obs_m<1e-50){
+      lk_value_temp<-li_2_raw_func(para_vec,yi,xi,li)
+      lk_value_vec[i]<-lk_value_temp
+      
+    } else {
+      print("negative m")
+    }
+  }
+  li_total<- -sum(lk_value_vec)
+  return(li_total)
+}
+
+ini_bound<-function(yi_vec,m_star_vec,x_i_vec,k) {
+  ini_par<-numeric(9+3*k)
+  ind_M<-as.numeric(m_star_vec>0)
+  Y_mod<-glm(yi_vec~m_star_vec+ind_M+x_i_vec+x_i_vec*ind_M+x_i_vec*m_star_vec,family = "gaussian")
+  Y_mod_ini<-as.numeric(Y_mod$coefficients)
+  ini_par[1:6]<-Y_mod_ini
+  
+  ### kmeans to group
+  m_nz<-m_star_vec[m_star_vec>0]
+  x_i_nz<-x_i_vec[m_star_vec>0]
+  km_res<-kmeans(m_nz,k)
+  gp_res<-km_res$cluster
+  alpha_0_vec<-numeric(k)
+  alpha_1_vec<-numeric(k)
+  psi_est_vec<-numeric(k)
+  phi_est_vec<-numeric(k)
+  
+  for (i in 1:k) {
+    m_gp<-m_nz[gp_res==i]
+    x_gp<-x_i_nz[gp_res==i]
+    
+    beta_mod<-try(betareg(m_gp~x_gp,link = "logit"),TRUE)
+    error_ind<-inherits(beta_mod, "try-error")
+    if(error_ind) {
+      alpha_0_vec[i]<-mean(m_gp)
+      alpha_1_vec[i]<-0
+      phi_est_vec[i]<-NA
+    } else {
+      beta_gp<-as.numeric(beta_mod$coefficients$mean)
+      alpha_0_vec[i]<-beta_gp[1]
+      alpha_1_vec[i]<-beta_gp[2]
+      phi_est_vec[i]<-as.numeric(beta_mod$coefficients$precision)
+    }
+    
+    psi_est_vec[i]<-length(m_gp)/length(m_nz)
+    # beta_mod2<-betareg(m_gp2~x_gp2,link = "logit")
+    # beta_gp2<-as.numeric(beta_mod2$coefficients$mean)
+  }
+  
+  alpha_0_sort<-order(alpha_0_vec,decreasing = T)
+  alpha_0_sorted<-alpha_0_vec[alpha_0_sort]
+  alpha_1_sorted<-alpha_1_vec[alpha_0_sort]
+  psi_est_sorted<-psi_est_vec[alpha_0_sort]
+  
+  
+  
+  
+  
+  # psi_est<-length(x_gp1)/(length(x_gp1)+length(x_gp2))
+  
+  # if(beta_gp1[1]<beta_gp2[1]) {
+  #   beta_temp<-beta_gp1
+  #   beta_gp1<-beta_gp2
+  #   beta_gp2<-beta_temp
+  #   psi_est<-1-psi_est
+  # }
+  # ini_par[7:8]<-beta_gp1
+  # ini_par[9:10]<-beta_gp2
+  
+  M_mod<-glm((1-ind_M)~x_i_vec,family = "binomial")
+  Del_est<-as.numeric(M_mod$coefficients)
+  ini_par[7:8]<-Del_est
+  phi_est<-mean(phi_est_vec,na.rm = T)
+  if (is.na(phi_est)) {
+    phi_est<-10
+  }
+  ini_par[9]<-min(phi_est,100)
+  ini_par[10]<-sqrt(summary(Y_mod)$dispersion)
+  
+  ini_par[11:(10+k)]<-alpha_0_sorted
+  ini_par[(11+k):(10+2*k)]<-alpha_1_sorted
+  ini_par[(11+2*k):(9+3*k)]<-psi_est_sorted[1:(k-1)]
+  
+  # lb_rate<-c(rep(10,8),0.9,NA,rep(10,k),rep(50,k),rep(NA,(k-1)))
+  # ub_rate<-c(rep(10,8),10,10,rep(10,k),rep(50,k),rep(NA,(k-1)))
+  # 
+  # lb_est<-ini_par-lb_rate*abs(ini_par)
+  # ub_est<-ini_par+ub_rate*abs(ini_par)
+  # lb_est[(length(lb_est)-k+2):length(lb_est)]<-0.05
+  # lb_est[10]<-0.5
+  # ub_est[(length(lb_est)-k+2):length(lb_est)]<-0.95
+  # 
+  # lb_est[11:(10+2*k)]<- -10
+  # ub_est[11:(10+2*k)]<- 10
+  # lb_est[9]<-min(1,lb_est[9])
+  
+  lb_est<-c(rep(-Inf,6),rep(-10,2),5,0.5,rep(-10,k),rep(-10,k),rep(0.01,k-1))
+  ub_est<-c(rep(Inf,6),rep(10,2),Inf,Inf,rep(10,k),rep(10,k),rep(0.99,k-1))
+  
+  
+  return(list(ini_par,lb_est,ub_est))
+}
+
+
+ini_bound_nz<-function(yi_vec,m_star_vec,x_i_vec,k) {
+  ini_par<-numeric(9+3*k)
+  # ind_M<-as.numeric(m_star_vec>0)
+  Y_mod<-glm(yi_vec~m_star_vec+x_i_vec+x_i_vec*m_star_vec,family = "gaussian")
+  Y_mod_ini<-as.numeric(Y_mod$coefficients)
+  ini_par[c(1,2,4,6)]<-Y_mod_ini
+  ini_par[c(3,5)]<-0
+  ### kmeans to group
+  m_nz<-m_star_vec[m_star_vec>0]
+  x_i_nz<-x_i_vec[m_star_vec>0]
+  km_res<-kmeans(m_nz,k)
+  gp_res<-km_res$cluster
+  alpha_0_vec<-numeric(k)
+  alpha_1_vec<-numeric(k)
+  psi_est_vec<-numeric(k)
+  phi_est_vec<-numeric(k)
+  
+  for (i in 1:k) {
+    m_gp<-m_nz[gp_res==i]
+    x_gp<-x_i_nz[gp_res==i]
+    
+    beta_mod<-try(betareg(m_gp~x_gp,link = "logit"),TRUE)
+    error_ind<-inherits(beta_mod, "try-error")
+    if(error_ind) {
+      alpha_0_vec[i]<-mean(m_gp)
+      alpha_1_vec[i]<-0
+      phi_est_vec[i]<-NA
+    } else {
+      beta_gp<-as.numeric(beta_mod$coefficients$mean)
+      alpha_0_vec[i]<-beta_gp[1]
+      alpha_1_vec[i]<-beta_gp[2]
+      phi_est_vec[i]<-as.numeric(beta_mod$coefficients$precision)
+    }
+    
+    psi_est_vec[i]<-length(m_gp)/length(m_nz)
+    # beta_mod2<-betareg(m_gp2~x_gp2,link = "logit")
+    # beta_gp2<-as.numeric(beta_mod2$coefficients$mean)
+  }
+  
+  alpha_0_sort<-order(alpha_0_vec,decreasing = T)
+  alpha_0_sorted<-alpha_0_vec[alpha_0_sort]
+  alpha_1_sorted<-alpha_1_vec[alpha_0_sort]
+  psi_est_sorted<-psi_est_vec[alpha_0_sort]
+  
+  
+  
+  
+  
+  # psi_est<-length(x_gp1)/(length(x_gp1)+length(x_gp2))
+  
+  # if(beta_gp1[1]<beta_gp2[1]) {
+  #   beta_temp<-beta_gp1
+  #   beta_gp1<-beta_gp2
+  #   beta_gp2<-beta_temp
+  #   psi_est<-1-psi_est
+  # }
+  # ini_par[7:8]<-beta_gp1
+  # ini_par[9:10]<-beta_gp2
+  
+  # M_mod<-glm((1-ind_M)~x_i_vec,family = "binomial")
+  Del_est<-c(-100,0)
+  ini_par[7:8]<-Del_est
+  phi_est<-mean(phi_est_vec,na.rm = T)
+  if (is.na(phi_est)) {
+    phi_est<-10
+  }
+  ini_par[9]<-min(phi_est,100)
+  ini_par[10]<-sqrt(summary(Y_mod)$dispersion)
+  
+  ini_par[11:(10+k)]<-alpha_0_sorted
+  ini_par[(11+k):(10+2*k)]<-alpha_1_sorted
+  ini_par[(11+2*k):(9+3*k)]<-psi_est_sorted[1:(k-1)]
+  
+  # lb_rate<-c(rep(10,8),0.9,NA,rep(10,k),rep(50,k),rep(NA,(k-1)))
+  # ub_rate<-c(rep(10,8),10,10,rep(10,k),rep(50,k),rep(NA,(k-1)))
+  # 
+  # lb_est<-ini_par-lb_rate*abs(ini_par)
+  # ub_est<-ini_par+ub_rate*abs(ini_par)
+  # lb_est[(length(lb_est)-k+2):length(lb_est)]<-0.05
+  # lb_est[10]<-0.5
+  # ub_est[(length(lb_est)-k+2):length(lb_est)]<-0.95
+  # 
+  # lb_est[11:(10+2*k)]<- -10
+  # ub_est[11:(10+2*k)]<- 10
+  # lb_est[9]<-min(1,lb_est[9])
+  
+  lb_est<-c(-Inf,-Inf,0,-Inf,0,-Inf,-100,0,5,0.5,rep(-10,k),rep(-10,k),rep(0.01,k-1))
+  ub_est<-c(Inf,Inf,0,Inf,0,Inf,-100,0,Inf,Inf,rep(10,k),rep(10,k),rep(0.99,k-1))
+  
+  
+  return(list(ini_par,lb_est,ub_est))
+}
+
+ini_bound_nomix<-function(yi_vec,m_star_vec,x_i_vec,k) {
+  ini_par<-numeric(9+3*k)
+  ind_M<-as.numeric(m_star_vec>0)
+  Y_mod<-glm(yi_vec~m_star_vec+ind_M+x_i_vec+x_i_vec*ind_M+x_i_vec*m_star_vec,family = "gaussian")
+  Y_mod_ini<-as.numeric(Y_mod$coefficients)
+  ini_par[1:6]<-Y_mod_ini
+  
+  ### kmeans to group
+  m_nz<-m_star_vec[m_star_vec>0]
+  x_i_nz<-x_i_vec[m_star_vec>0]
+  beta_mod<-try(betareg(m_nz~x_i_nz,link = "logit"),TRUE)
+  error_ind<-inherits(beta_mod, "try-error")
+  if(error_ind) {
+    alpha_0<-mean(m_nz)
+    alpha_1<-0
+    phi_est<-NA
+  } else {
+    beta_gp<-as.numeric(beta_mod$coefficients$mean)
+    alpha_0<-beta_gp[1]
+    alpha_1<-beta_gp[2]
+    phi_est<-as.numeric(beta_mod$coefficients$precision)
+  }
+  M_mod<-glm((1-ind_M)~x_i_vec,family = "binomial")
+  Del_est<-as.numeric(M_mod$coefficients)
+  
+  ini_par[7:8]<-Del_est
+  # phi_est<-mean(phi_est_vec,na.rm = T)
+  if (is.na(phi_est)) {
+    phi_est<-10
+  }
+  ini_par[9]<-min(phi_est,100)
+  ini_par[10]<-sqrt(summary(Y_mod)$dispersion)
+  
+  ini_par[11]<-alpha_0
+  ini_par[12]<-alpha_1
+  
+  lb_est<-c(rep(-Inf,6),-10,-10,0.1,0.5,-10,-10)
+  ub_est<-c(rep(Inf,6),10,10,Inf,Inf,10,10)
+  
+  
+  return(list(ini_par,lb_est,ub_est))
+  
+}
+
+ini_bound_nz_nomix<-function(yi_vec,m_star_vec,x_i_vec,k) {
+  ini_par<-numeric(9+3*k)
+  # ind_M<-as.numeric(m_star_vec>0)
+  Y_mod<-glm(yi_vec~m_star_vec+x_i_vec+x_i_vec*m_star_vec,family = "gaussian")
+  Y_mod_ini<-as.numeric(Y_mod$coefficients)
+  ini_par[c(1,2,4,6)]<-Y_mod_ini
+  ini_par[c(3,5)]<-0
+  
+  ### kmeans to group
+  m_nz<-m_star_vec[m_star_vec>0]
+  x_i_nz<-x_i_vec[m_star_vec>0]
+  beta_mod<-try(betareg(m_nz~x_i_nz,link = "logit"),TRUE)
+  error_ind<-inherits(beta_mod, "try-error")
+  if(error_ind) {
+    alpha_0<-mean(m_nz)
+    alpha_1<-0
+    phi_est<-NA
+  } else {
+    beta_gp<-as.numeric(beta_mod$coefficients$mean)
+    alpha_0<-beta_gp[1]
+    alpha_1<-beta_gp[2]
+    phi_est<-as.numeric(beta_mod$coefficients$precision)
+  }
+  # M_mod<-glm((1-ind_M)~x_i_vec,family = "binomial")
+  Del_est<-c(-100,0)
+  
+  ini_par[7:8]<-Del_est
+  # phi_est<-mean(phi_est_vec,na.rm = T)
+  if (is.na(phi_est)) {
+    phi_est<-10
+  }
+  ini_par[9]<-min(phi_est,100)
+  ini_par[10]<-sqrt(summary(Y_mod)$dispersion)
+  
+  ini_par[11]<-alpha_0
+  ini_par[12]<-alpha_1
+  
+  lb_est<-c(-Inf,-Inf,0,-Inf,0,-Inf,-100,0,0.1,0.5,-10,-10)
+  ub_est<-c(Inf,Inf,0,Inf,0,Inf,-100,0,Inf,Inf,10,10)
+  
+  
+  return(list(ini_par,lb_est,ub_est))
+  
+}
+
+
+
+real_data_run_func<-function(yi_vec,obs_m_vec,xi_vec,li_vec,k) {
+  
+  
+  ini_value<-ini_bound(yi_vec,obs_m_vec,xi_vec,k)
+  theta1<-ini_value[[1]]
+  lb_est<-ini_value[[2]]
+  ub_est<-ini_value[[3]]
+  
+  
+  
+  theta0<-0
+  
+  Aeq_vec<-rep(0,length(theta1))
+  Aeq_vec[(length(Aeq_vec)-k+2):length(Aeq_vec)]<-1
+  
+  Aeq<-matrix(Aeq_vec,nrow=1)
+  Beq<-0.99
+  
+  t1<-Sys.time()
+  while (sum(abs(theta1-theta0)) > 1e-3) {
+    theta0<-theta1
+    # theta0[6]<-0
+    est1<-solnl(theta0,objfun = function(par) {
+      # cat(par,"\n")
+      # par[6]<-0
+      Q_theta_cpp(par,theta0,yi_vec,m_star_vec = obs_m_vec,x_i_vec = xi_vec,l_i_vec = li_vec)
+    },A = Aeq,B = Beq,lb = lb_est,ub = ub_est)
+    theta1<-as.numeric(est1$par)
+    
+    alpha0_temp<-theta1[11:(10+k)]
+    alpha1_temp<-theta1[(11+k):(10+2*k)]
+    psi_temp<-theta1[(11+2*k):(9+3*k)]
+    psi_temp1<-c(psi_temp,(1-sum(psi_temp)))
+    alpha0_temp_order<-order(alpha0_temp,decreasing = T)
+    psi_temp_fin<-psi_temp1[alpha0_temp_order]
+    
+    theta1[11:(10+k)]<-alpha0_temp[alpha0_temp_order]
+    theta1[(11+k):(10+2*k)]<-alpha1_temp[alpha0_temp_order]
+    theta1[(11+2*k):(9+3*k)]<-psi_temp_fin[1:(k-1)]
+    # cat("theta1",theta1,"\n")
+    
+    # if (theta1[7]<theta1[9]) {
+    #   theta_temp<-theta1
+    #   theta1[7:8]<-theta_temp[9:10]
+    #   theta1[9:10]<-theta1[7:8]
+    #   theta1[14]<-1-theta1[14]
+    #   est1$par<-theta1
+    #   cat("theta1",theta1,"\n")
+    # }
+  }
+  est1$par<-theta1
+  
+  # step_size<-sum(abs(theta1-theta0))
+  # lb_est<-theta1-step_size
+  # ub_est<-theta1+step_size
+  # 
+  hess_mat<-hessian(function(x) {
+    # x[6]<-0
+    Q_theta_cpp(x,as.numeric(est1$par),yi_vec,m_star_vec = obs_m_vec,x_i_vec = xi_vec,l_i_vec = li_vec)
+  } ,as.numeric(est1$par))
+  
+  Jac_mat<-jacobian(function(y) {
+    # y[6]<-0
+    grad(function(x) {
+      # x[6]<-0
+      Q_theta_cpp(x,y,yi_vec,m_star_vec = obs_m_vec,x_i_vec = xi_vec,l_i_vec = li_vec)},
+      as.numeric(est1$par)
+    )
+  },as.numeric(est1$par)
+  )
+  
+  hess_est<-hess_mat+Jac_mat
+  
+  t2<-Sys.time()
+  
+  # est1$par_true<-par_true
+  est1$time<-difftime(t2,t1,units = "hours")
+  est1$hess_est<-hess_est
+  
+  est1$mediation_effect<-mediation_effect_cal(as.numeric(est1$par),x_1 = 0,x_2 = 1)
+  
+  mediation_var<-function(x) {
+    return(mediation_effect_cal(x,x_1 = 0,x_2 = 1))
+  }
+  
+  Med_jac<-jacobian(mediation_var,as.numeric(est1$par))
+  
+  # Med_var<-Med_jac %*% var_est %*% t(Med_jac)
+  
+  est1$Med_jac<-Med_jac
+  true_fn<-li_total_raw(est1$par,yi_vec = yi_vec,obs_m_vec = obs_m_vec,
+                        xi_vec = xi_vec,li_vec = li_vec)
+  est1$fn<-true_fn
+  
+  hess_direct<-hessian(function(x) {
+    # x[6]<-0
+    li_total_raw(x,yi_vec = yi_vec,obs_m_vec = obs_m_vec,
+                 xi_vec = xi_vec,li_vec = li_vec)
+  } ,as.numeric(est1$par))
+  est1$hess_direct<-hess_direct
+  
+  BIC_est<-2*est1$fn + log(length(yi_vec)) * length(theta1)
+  AIC_est<-2*est1$fn + 2*length(theta1)
+  
+  
+  est1$BIC_est<-BIC_est
+  est1$AIC_est<-AIC_est
+  
+  cat("k ",k," theta ",theta1,"\n")
+  
+  return(est1)
+}
+
+real_data_run_func_nz<-function(yi_vec,obs_m_vec,xi_vec,li_vec,k) {
+  
+  
+  ini_value<-ini_bound_nz(yi_vec,obs_m_vec,xi_vec,k)
+  theta1<-ini_value[[1]]
+  lb_est<-ini_value[[2]]
+  ub_est<-ini_value[[3]]
+  
+  
+  
+  theta0<-0
+  
+  Aeq_vec<-rep(0,length(theta1))
+  Aeq_vec[(length(Aeq_vec)-k+2):length(Aeq_vec)]<-1
+  
+  Aeq<-matrix(Aeq_vec,nrow=1)
+  Beq<-0.99
+  
+  t1<-Sys.time()
+  while (sum(abs(theta1-theta0)) > 1e-3) {
+    theta0<-theta1
+    # theta0[6]<-0
+    est1<-solnl(theta0,objfun = function(par) {
+      # cat(par,"\n")
+      # par[6]<-0
+      Q_theta_cpp_nz(par,theta0,yi_vec,m_star_vec = obs_m_vec,x_i_vec = xi_vec,l_i_vec = li_vec)
+    },A = Aeq,B = Beq,lb = lb_est,ub = ub_est)
+    theta1<-as.numeric(est1$par)
+    
+    alpha0_temp<-theta1[11:(10+k)]
+    alpha1_temp<-theta1[(11+k):(10+2*k)]
+    psi_temp<-theta1[(11+2*k):(9+3*k)]
+    psi_temp1<-c(psi_temp,(1-sum(psi_temp)))
+    alpha0_temp_order<-order(alpha0_temp,decreasing = T)
+    psi_temp_fin<-psi_temp1[alpha0_temp_order]
+    
+    theta1[11:(10+k)]<-alpha0_temp[alpha0_temp_order]
+    theta1[(11+k):(10+2*k)]<-alpha1_temp[alpha0_temp_order]
+    theta1[(11+2*k):(9+3*k)]<-psi_temp_fin[1:(k-1)]
+    # cat("theta1",theta1,"\n")
+    
+    # if (theta1[7]<theta1[9]) {
+    #   theta_temp<-theta1
+    #   theta1[7:8]<-theta_temp[9:10]
+    #   theta1[9:10]<-theta1[7:8]
+    #   theta1[14]<-1-theta1[14]
+    #   est1$par<-theta1
+    #   cat("theta1",theta1,"\n")
+    # }
+  }
+  est1$par<-theta1
+  
+  # step_size<-sum(abs(theta1-theta0))
+  # lb_est<-theta1-step_size
+  # ub_est<-theta1+step_size
+  # 
+  hess_mat<-hessian(function(x) {
+    # x[6]<-0
+    Q_theta_cpp_nz(x,as.numeric(est1$par),yi_vec,m_star_vec = obs_m_vec,x_i_vec = xi_vec,l_i_vec = li_vec)
+  } ,as.numeric(est1$par))
+  
+  Jac_mat<-jacobian(function(y) {
+    # y[6]<-0
+    grad(function(x) {
+      # x[6]<-0
+      Q_theta_cpp_nz(x,y,yi_vec,m_star_vec = obs_m_vec,x_i_vec = xi_vec,l_i_vec = li_vec)},
+      as.numeric(est1$par)
+    )
+  },as.numeric(est1$par)
+  )
+  
+  hess_est<-hess_mat+Jac_mat
+  
+  t2<-Sys.time()
+  
+  # est1$par_true<-par_true
+  est1$time<-difftime(t2,t1,units = "hours")
+  est1$hess_est<-hess_est
+  
+  est1$mediation_effect<-mediation_effect_cal(as.numeric(est1$par),x_1 = 0,x_2 = 1)
+  
+  mediation_var<-function(x) {
+    return(mediation_effect_cal(x,x_1 = 0,x_2 = 1))
+  }
+  
+  Med_jac<-jacobian(mediation_var,as.numeric(est1$par))
+  
+  # Med_var<-Med_jac %*% var_est %*% t(Med_jac)
+  
+  est1$Med_jac<-Med_jac
+  true_fn<-li_total_raw(est1$par,yi_vec = yi_vec,obs_m_vec = obs_m_vec,
+                        xi_vec = xi_vec,li_vec = li_vec)
+  
+  hess_direct<-hessian(function(x) {
+    # x[6]<-0
+    li_total_raw(x,yi_vec = yi_vec,obs_m_vec = obs_m_vec,
+                 xi_vec = xi_vec,li_vec = li_vec)
+  } ,as.numeric(est1$par))
+  est1$hess_direct<-hess_direct
+  
+  est1$fn<-true_fn
+  # AIC_est<-true_fn+2*length(res_temp$par)
+  
+  BIC_est<-2*est1$fn + log(length(yi_vec)) * length(theta1)
+  AIC_est<-2*est1$fn + 2*length(theta1)
+  
+  est1$BIC_est<-BIC_est
+  est1$AIC_est<-AIC_est
+  
+  cat("k ",k," theta ",theta1,"\n")
+  
+  
+  return(est1)
+}
+
+
+real_data_run_func_nomix<-function(yi_vec,obs_m_vec,xi_vec,li_vec,k) {
+  
+  ini_value<-ini_bound_nomix(yi_vec,obs_m_vec,xi_vec,k)
+  theta1<-ini_value[[1]]
+  lb_est<-ini_value[[2]]
+  ub_est<-ini_value[[3]]
+  
+  
+  
+  
+  t1<-Sys.time()
+  
+  est1<-solnl(theta1,objfun = function(par) {
+    # cat(par,"\n")
+    # par[6]<-0
+    Q_theta_cpp_nomix(par,yi_vec,m_star_vec = obs_m_vec,x_i_vec = xi_vec,l_i_vec = li_vec)
+  },lb = lb_est,ub = ub_est)
+  
+  est1$par<-as.numeric(est1$par)
+  
+  
+  hess_est<-est1$hessian
+  
+  t2<-Sys.time()
+  
+  # est1$par_true<-par_true
+  est1$time<-difftime(t2,t1,units = "hours")
+  est1$hess_est<-hess_est
+  
+  hess_direct<-hessian(function(x) {
+    par1<-x
+    Q_theta_cpp_nomix(par1,yi_vec,m_star_vec = obs_m_vec,
+                      x_i_vec = xi_vec,l_i_vec = li_vec)
+  } ,as.numeric(est1$par))
+  
+  est1$hess_direct<-hess_direct
+  
+  est1$mediation_effect<-mediation_effect_cal(as.numeric(est1$par),x_1 = 0,x_2 = 1)
+  
+  mediation_var<-function(x) {
+    return(mediation_effect_cal(x,x_1 = 0,x_2 = 1))
+  }
+  
+  Med_jac<-jacobian(mediation_var,as.numeric(est1$par))
+  
+  # Med_var<-Med_jac %*% var_est %*% t(Med_jac)
+  
+  est1$Med_jac<-Med_jac
+  BIC_est<-2*est1$fn + log(length(yi_vec)) * length(theta1)
+  AIC_est<-2*est1$fn + 2*length(theta1)
+  
+  est1$BIC_est<-BIC_est
+  est1$AIC_est<-AIC_est
+  
+  cat("k ",k," theta ",est1$par,"\n")
+  
+  return(est1)
+}
+
+real_data_run_func_nz_nomix<-function(yi_vec,obs_m_vec,xi_vec,li_vec,k) {
+  
+  ini_value<-ini_bound_nz_nomix(yi_vec,obs_m_vec,xi_vec,k)
+  theta1<-ini_value[[1]][-c(3,5,7,8)]
+  lb_est<-ini_value[[2]][-c(3,5,7,8)]
+  ub_est<-ini_value[[3]][-c(3,5,7,8)]
+  
+  
+  
+  
+  t1<-Sys.time()
+  
+  est1<-solnl(theta1,objfun = function(par) {
+    par1<-numeric(12)
+    par1[c(1:2,4,6,9:12)]<-par
+    par1[7]<- -100
+    # cat(par,"\n")
+    # par[6]<-0
+    Q_theta_cpp_nomix(par1,yi_vec,m_star_vec = obs_m_vec,x_i_vec = xi_vec,l_i_vec = li_vec)
+  },lb = lb_est,ub = ub_est)
+  
+  par_fin<-numeric(12)
+  par_fin[c(1:2,4,6,9:12)]<-as.numeric(est1$par)
+  par_fin[7]<- -100
+  
+  
+  est1$par<-par_fin
+  
+  
+  hess_est<-est1$hessian
+  
+  hess_direct<-hessian(function(x) {
+    par1<-numeric(12)
+    par1[c(1:2,4,6,9:12)]<-x
+    par1[7]<- -100
+    
+    Q_theta_cpp_nomix(par1,yi_vec,m_star_vec = obs_m_vec,
+                      x_i_vec = xi_vec,l_i_vec = li_vec)
+  } ,as.numeric(est1$par[-c(3,5,7,8)]))
+  
+  est1$hess_direct<-hess_direct
+  
+  t2<-Sys.time()
+  
+  # est1$par_true<-par_true
+  est1$time<-difftime(t2,t1,units = "hours")
+  est1$hess_est<-hess_est
+  
+  est1$mediation_effect<-mediation_effect_cal(as.numeric(est1$par),x_1 = 0,x_2 = 1)
+  
+  mediation_var<-function(x) {
+    return(mediation_effect_cal(x,x_1 = 0,x_2 = 1))
+  }
+  
+  Med_jac<-jacobian(mediation_var,as.numeric(est1$par))
+  
+  # Med_var<-Med_jac %*% var_est %*% t(Med_jac)
+  
+  est1$Med_jac<-Med_jac
+  BIC_est<-2*est1$fn + log(length(yi_vec)) * length(theta1)
+  AIC_est<-2*est1$fn + 2*length(theta1)
+  
+  est1$BIC_est<-BIC_est
+  est1$AIC_est<-AIC_est
+  
+  cat("k ",k," theta ",est1$par,"\n")
+  
+  return(est1)
+}
+
+
+
+apply_real_data_func<-function(taxon_name,lib_name,y_name,x_name,data,k_range,num_cores=detectCores()) {
+  real_data_name<-colnames(data)
+  taxon_name_ind<-grep(taxon_name,real_data_name)
+  taxon_dat_temp<-data[,taxon_name_ind]
+  if (length(taxon_name_ind)>1) {
+    use_dat_ind<-colSums(taxon_dat_temp>0)>0.1*nrow(data)
+    
+    taxon_dat<-taxon_dat_temp[,use_dat_ind]
+    num_taxon<-ncol(taxon_dat)
+  } else {
+    taxon_dat<-as.data.frame(taxon_dat_temp)
+    num_taxon<-1
+  }
+  
+  yi_vec<-data[,y_name]
+  xi_vec<-data[,x_name]
+  li_vec<-data[,lib_name]
+  
+  # penalized_taxon<-taxon_dat/rowSums(taxon_dat)
+  # penalized_mat<-as.matrix(cbind(penalized_taxon,penalized_taxon>0,penalized_taxon>0*xi_vec,xi_vec))
+  # unpenalized_taxon<-taxon_dat[,i]
+  # lass_reg<-cv.glmnet(y = yi_vec,x= penalized_mat,intercept=F,standardize=T)
+  # lass_coef<-coef(lass_reg,s=lass_reg$lambda.1se)[,1]
+  # lass_coef_fin<-lass_coef[-1]
+  
+  mcapply_func<-function(i) {
+    obs_m_vec<-taxon_dat[,i]
+    temp_name<-colnames(taxon_dat)[i]
+    # unpenalized_mat<-cbind(unpenalized_taxon,unpenalized_taxon>0,xi_vec,(unpenalized_taxon>0)*xi_vec)
+    # 
+    # pen_reg<-penalized(yi_vec,penalized=penalized_mat,unpenalized = unpenalized_mat,lambda1 = 1,lambda2 = 1,trace = F)
+    # 
+    # pen_coef<-coef(pen_reg,which="penalized")
+    # predict_pen<-penalized_mat %*% pen_coef
+    # yi_remain<-yi_vec-predict_pen
+    res_list_med<-list()
+    AIC_select<-c()
+    for (k in k_range) {
+      if (k==1) {
+        if (sum(obs_m_vec==0) > (0.1*length(obs_m_vec))) {
+          cat(" taxon_z ",temp_name,"\n")
+          res_temp<-try(real_data_run_func_nomix(yi_vec,obs_m_vec,xi_vec,li_vec,k),T)
+        } else {
+          cat(" taxon_nz ",temp_name,"\n")
+          res_temp<-try(real_data_run_func_nz_nomix(yi_vec,obs_m_vec,xi_vec,li_vec,k),T)
+        }
+      } else {
+        if (sum(obs_m_vec==0) > (0.1*length(obs_m_vec))) {
+          cat(" taxon_z ",temp_name,"\n")
+          res_temp<-try(real_data_run_func(yi_vec,obs_m_vec,xi_vec,li_vec,k),T)
+        } else {
+          cat(" taxon_nz ",temp_name,"\n")
+          res_temp<-try(real_data_run_func_nz(yi_vec,obs_m_vec,xi_vec,li_vec,k),T)
+        }
+      }
+      res_temp$taxon_name<-temp_name
+      AIC_select[k]<-ifelse(class(res_temp)=="try-error",NA,res_temp$AIC_est)
+      res_list_med[[k]]<-res_temp
+    }
+    res_fin_med<-res_list_med[[which.min(AIC_select)]]
+    
+    return(list(res_fin_med=res_fin_med,res_list_med=res_list_med))
+  }
+  
+  trial<-seq_len(num_taxon)
+  
+  registerDoParallel(num_cores)
+  
+  list_save<-foreach(i=trial) %dopar% {
+    try(mcapply_func(i),TRUE)
+  }
+  
+  
+  # list_save<-mclapply(trial,mcapply_func,mc.cores = num_cores)
+  
+  return(list_save)
+}

@@ -1,0 +1,199 @@
+[
+    {
+        "file": "/Users/quranwu/Dropbox (UFL)/QIIME/Beta Mixture/MarZICM/src/Q_theta_cpp_include_nz.cpp",
+        "file_last_write": 1661111663.0,
+        "definitions": [
+            {
+                "usr": "c:@F@expit#d#",
+                "kind": 6,
+                "parent_name": "",
+                "name": "expit(double)",
+                "file": "/Users/quranwu/Dropbox (UFL)/QIIME/Beta Mixture/MarZICM/src/Q_theta_cpp_include_nz.cpp",
+                "line": 5,
+                "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@F@expit#$@N@Rcpp@S@Vector>#VI14#@N@Rcpp@ST>1#T@PreserveStorage#",
+                "kind": 6,
+                "parent_name": "",
+                "name": "expit(Rcpp::NumericVector)",
+                "file": "/Users/quranwu/Dropbox (UFL)/QIIME/Beta Mixture/MarZICM/src/Q_theta_cpp_include_nz.cpp",
+                "line": 10,
+                "column": 15,
+                "hidden": false
+            },
+            {
+                "usr": "c:@F@beta#d#d#",
+                "kind": 6,
+                "parent_name": "",
+                "name": "beta(double, double)",
+                "file": "/Users/quranwu/Dropbox (UFL)/QIIME/Beta Mixture/MarZICM/src/Q_theta_cpp_include_nz.cpp",
+                "line": 15,
+                "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@F@mmultcpp#$@N@Rcpp@S@Matrix>#VI14#@N@Rcpp@ST>1#T@PreserveStorage#$@N@Rcpp@S@Vector>#VI14#@N@Rcpp@ST>1#T@PreserveStorage#",
+                "kind": 6,
+                "parent_name": "",
+                "name": "mmultcpp(Rcpp::NumericMatrix, Rcpp::NumericVector)",
+                "file": "/Users/quranwu/Dropbox (UFL)/QIIME/Beta Mixture/MarZICM/src/Q_theta_cpp_include_nz.cpp",
+                "line": 25,
+                "column": 15,
+                "hidden": false
+            },
+            {
+                "usr": "c:@F@expect_M_x#$@N@Rcpp@S@Vector>#VI14#@N@Rcpp@ST>1#T@PreserveStorage#d#S0_#",
+                "kind": 6,
+                "parent_name": "",
+                "name": "expect_M_x(Rcpp::NumericVector, double, Rcpp::NumericVector)",
+                "file": "/Users/quranwu/Dropbox (UFL)/QIIME/Beta Mixture/MarZICM/src/Q_theta_cpp_include_nz.cpp",
+                "line": 36,
+                "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@F@test_inf#$@N@Rcpp@S@Vector>#VI14#@N@Rcpp@ST>1#T@PreserveStorage#S0_#",
+                "kind": 6,
+                "parent_name": "",
+                "name": "test_inf(Rcpp::NumericVector, Rcpp::NumericVector)",
+                "file": "/Users/quranwu/Dropbox (UFL)/QIIME/Beta Mixture/MarZICM/src/Q_theta_cpp_include_nz.cpp",
+                "line": 41,
+                "column": 15,
+                "hidden": false
+            },
+            {
+                "usr": "c:@F@NaN_to_0_vec#$@N@Rcpp@S@Vector>#VI14#@N@Rcpp@ST>1#T@PreserveStorage#",
+                "kind": 6,
+                "parent_name": "",
+                "name": "NaN_to_0_vec(Rcpp::NumericVector)",
+                "file": "/Users/quranwu/Dropbox (UFL)/QIIME/Beta Mixture/MarZICM/src/Q_theta_cpp_include_nz.cpp",
+                "line": 48,
+                "column": 15,
+                "hidden": false
+            },
+            {
+                "usr": "c:@F@impute_small_num#$@N@Rcpp@S@Vector>#VI14#@N@Rcpp@ST>1#T@PreserveStorage#d#",
+                "kind": 6,
+                "parent_name": "",
+                "name": "impute_small_num(Rcpp::NumericVector, double)",
+                "file": "/Users/quranwu/Dropbox (UFL)/QIIME/Beta Mixture/MarZICM/src/Q_theta_cpp_include_nz.cpp",
+                "line": 56,
+                "column": 15,
+                "hidden": false
+            },
+            {
+                "usr": "c:@F@li_1_func#$@N@Rcpp@S@Vector>#VI14#@N@Rcpp@ST>1#T@PreserveStorage#d#d#d#S0_#",
+                "kind": 6,
+                "parent_name": "",
+                "name": "li_1_func(Rcpp::NumericVector, double, double, double, Rcpp::NumericVector)",
+                "file": "/Users/quranwu/Dropbox (UFL)/QIIME/Beta Mixture/MarZICM/src/Q_theta_cpp_include_nz.cpp",
+                "line": 64,
+                "column": 15,
+                "hidden": false
+            },
+            {
+                "usr": "c:@F@li0_2_func#$@N@Rcpp@S@Vector>#VI14#@N@Rcpp@ST>1#T@PreserveStorage#d#d#S0_#",
+                "kind": 6,
+                "parent_name": "",
+                "name": "li0_2_func(Rcpp::NumericVector, double, double, Rcpp::NumericVector)",
+                "file": "/Users/quranwu/Dropbox (UFL)/QIIME/Beta Mixture/MarZICM/src/Q_theta_cpp_include_nz.cpp",
+                "line": 110,
+                "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@F@li_2_func#$@N@Rcpp@S@Vector>#VI14#@N@Rcpp@ST>1#T@PreserveStorage#d#d#d#S0_#",
+                "kind": 6,
+                "parent_name": "",
+                "name": "li_2_func(Rcpp::NumericVector, double, double, double, Rcpp::NumericVector)",
+                "file": "/Users/quranwu/Dropbox (UFL)/QIIME/Beta Mixture/MarZICM/src/Q_theta_cpp_include_nz.cpp",
+                "line": 145,
+                "column": 15,
+                "hidden": false
+            },
+            {
+                "usr": "c:@F@tau_1_func#$@N@Rcpp@S@Vector>#VI14#@N@Rcpp@ST>1#T@PreserveStorage#d#d#d#S0_#",
+                "kind": 6,
+                "parent_name": "",
+                "name": "tau_1_func(Rcpp::NumericVector, double, double, double, Rcpp::NumericVector)",
+                "file": "/Users/quranwu/Dropbox (UFL)/QIIME/Beta Mixture/MarZICM/src/Q_theta_cpp_include_nz.cpp",
+                "line": 198,
+                "column": 15,
+                "hidden": false
+            },
+            {
+                "usr": "c:@F@tau_2_func#$@N@Rcpp@S@Vector>#VI14#@N@Rcpp@ST>1#T@PreserveStorage#d#d#d#S0_#",
+                "kind": 6,
+                "parent_name": "",
+                "name": "tau_2_func(Rcpp::NumericVector, double, double, double, Rcpp::NumericVector)",
+                "file": "/Users/quranwu/Dropbox (UFL)/QIIME/Beta Mixture/MarZICM/src/Q_theta_cpp_include_nz.cpp",
+                "line": 243,
+                "column": 15,
+                "hidden": false
+            },
+            {
+                "usr": "c:@F@li_1_1taxon_func#$@N@Rcpp@S@Vector>#VI14#@N@Rcpp@ST>1#T@PreserveStorage#d#d#d#S0_#",
+                "kind": 6,
+                "parent_name": "",
+                "name": "li_1_1taxon_func(Rcpp::NumericVector, double, double, double, Rcpp::NumericVector)",
+                "file": "/Users/quranwu/Dropbox (UFL)/QIIME/Beta Mixture/MarZICM/src/Q_theta_cpp_include_nz.cpp",
+                "line": 255,
+                "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@F@li_2_1taxon_func#$@N@Rcpp@S@Vector>#VI14#@N@Rcpp@ST>1#T@PreserveStorage#d#d#d#S0_#",
+                "kind": 6,
+                "parent_name": "",
+                "name": "li_2_1taxon_func(Rcpp::NumericVector, double, double, double, Rcpp::NumericVector)",
+                "file": "/Users/quranwu/Dropbox (UFL)/QIIME/Beta Mixture/MarZICM/src/Q_theta_cpp_include_nz.cpp",
+                "line": 303,
+                "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@F@Q_theta_cpp#$@N@Rcpp@S@Vector>#VI14#@N@Rcpp@ST>1#T@PreserveStorage#S0_#S0_#S0_#S0_#S0_#$@N@Rcpp@S@Matrix>#VI14#@N@Rcpp@ST>1#T@PreserveStorage#",
+                "kind": 6,
+                "parent_name": "",
+                "name": "Q_theta_cpp(Rcpp::NumericVector, Rcpp::NumericVector, Rcpp::NumericVector, Rcpp::NumericVector, Rcpp::NumericVector, Rcpp::NumericVector, Rcpp::NumericMatrix)",
+                "file": "/Users/quranwu/Dropbox (UFL)/QIIME/Beta Mixture/MarZICM/src/Q_theta_cpp_include_nz.cpp",
+                "line": 348,
+                "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@F@Q_theta_cpp_nz#$@N@Rcpp@S@Vector>#VI14#@N@Rcpp@ST>1#T@PreserveStorage#S0_#S0_#S0_#S0_#S0_#$@N@Rcpp@S@Matrix>#VI14#@N@Rcpp@ST>1#T@PreserveStorage#",
+                "kind": 6,
+                "parent_name": "",
+                "name": "Q_theta_cpp_nz(Rcpp::NumericVector, Rcpp::NumericVector, Rcpp::NumericVector, Rcpp::NumericVector, Rcpp::NumericVector, Rcpp::NumericVector, Rcpp::NumericMatrix)",
+                "file": "/Users/quranwu/Dropbox (UFL)/QIIME/Beta Mixture/MarZICM/src/Q_theta_cpp_include_nz.cpp",
+                "line": 403,
+                "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@F@Q_theta_cpp_nomix#$@N@Rcpp@S@Vector>#VI14#@N@Rcpp@ST>1#T@PreserveStorage#S0_#S0_#S0_#S0_#$@N@Rcpp@S@Matrix>#VI14#@N@Rcpp@ST>1#T@PreserveStorage#",
+                "kind": 6,
+                "parent_name": "",
+                "name": "Q_theta_cpp_nomix(Rcpp::NumericVector, Rcpp::NumericVector, Rcpp::NumericVector, Rcpp::NumericVector, Rcpp::NumericVector, Rcpp::NumericMatrix)",
+                "file": "/Users/quranwu/Dropbox (UFL)/QIIME/Beta Mixture/MarZICM/src/Q_theta_cpp_include_nz.cpp",
+                "line": 465,
+                "column": 8,
+                "hidden": false
+            },
+            {
+                "usr": "c:@F@Q_theta_cpp_nz_nomix#$@N@Rcpp@S@Vector>#VI14#@N@Rcpp@ST>1#T@PreserveStorage#S0_#S0_#S0_#S0_#$@N@Rcpp@S@Matrix>#VI14#@N@Rcpp@ST>1#T@PreserveStorage#",
+                "kind": 6,
+                "parent_name": "",
+                "name": "Q_theta_cpp_nz_nomix(Rcpp::NumericVector, Rcpp::NumericVector, Rcpp::NumericVector, Rcpp::NumericVector, Rcpp::NumericVector, Rcpp::NumericMatrix)",
+                "file": "/Users/quranwu/Dropbox (UFL)/QIIME/Beta Mixture/MarZICM/src/Q_theta_cpp_include_nz.cpp",
+                "line": 509,
+                "column": 8,
+                "hidden": false
+            }
+        ],
+        "hidden": false
+    }
+]

@@ -1,0 +1,116 @@
+
+## True value set
+set.seed(32608)
+
+beta_0<- -5
+beta_1<-100
+beta_2<-5
+beta_3<-1
+beta_4<-1
+beta_5<-1
+# alpha_01<- -0.5
+# alpha_11<- -0.3
+# alpha_02<-0.5
+# alpha_12<-0.3
+
+# alpha_01<- -1
+# alpha_11<- 0.5
+# alpha_02<- -5
+# alpha_12<- 0.5
+
+gamma_0<-0.3
+gamma_1<- -0.3
+# gamma_0<--5
+# gamma_1<- -5
+phi<-10
+# psi<-0.4
+delta<-1
+
+alpha_0_vec<-c(1,-2,-5)
+alpha_1_vec<-c(0.5,0.5,0.5)
+psi_vec<-c(0.2,0.3)
+
+# par_true<-c(beta_0,beta_1,beta_2,beta_3,beta_4,beta_5,gamma_0,gamma_1,phi,delta,alpha_0_vec,alpha_1_vec,psi_vec)
+
+# 
+# nsample<-300
+# ndata<-100
+# 
+# beta_dist_trans<-function(mu,phi) {
+#   alpha<-mu*phi
+#   beta<-phi-mu*phi
+#   return(c(alpha,beta))
+# }
+
+realdata=read.csv("VSLprocessed_data.csv",header=T,na.strings = c("",NA))
+Libsize<-realdata$libSiz
+
+generate_sim<-function(nsample,ndata=100) {
+  par_true<-c(beta_0,beta_1,beta_2,beta_3,beta_4,beta_5,gamma_0,gamma_1,phi,delta,alpha_0_vec,alpha_1_vec,psi_vec)
+  
+  n_total<-nsample*ndata
+  x_i<-rbinom(n_total,1,0.5)
+  mu<-sapply(x_i,function(x) expit(alpha_0_vec+alpha_1_vec*x))
+  # mu<-expit(alpha_0_vec+alpha_1_vec*x_i)
+  # mu_2<-expit(alpha_02+alpha_12*x_i)
+  Delta<-expit(gamma_0+gamma_1*x_i)
+  
+  
+  
+  psi_vec_total<-c(psi_vec,1-sum(psi_vec))
+
+  dist_gp<-sample(1:3,n_total,psi_vec_total,replace = T)
+  zero_gp<-rbinom(n_total,1,Delta)
+  tru_m_vec<-numeric(n_total)
+  for(i in 1:n_total) {
+    if(zero_gp[i]==1) {
+      tru_m<-0
+    } else {
+      dist_gp_ind<-dist_gp[i]
+      mu_use<-mu[dist_gp_ind,i]
+      tru_m<-rbeta(1,mu_use*phi,(1-mu_use)*phi)
+    }
+    tru_m_vec[i]<-tru_m
+  }
+  
+  epis<-rnorm(n_total,sd=delta)
+  Y_vec<-beta_0+beta_1*tru_m_vec+beta_2*(tru_m_vec>0)+beta_3*x_i+beta_4*x_i*(tru_m_vec>0)+beta_5*x_i*tru_m_vec + epis
+  
+  ## False zero
+  li_vec<-sample(Libsize,n_total,replace = T)
+  false_zero_obs<-(tru_m_vec*li_vec)>1
+  obs_m<-tru_m_vec*false_zero_obs
+  num_false_zero<-sum(tru_m_vec!=obs_m)
+  cat("number of false zero ",num_false_zero)
+  
+  # obs_m<-tru_m_vec
+  
+  output_data<-data.frame(x=x_i,Y=Y_vec,M=obs_m,true_M=tru_m_vec,zero_ind=zero_gp,
+                          M_ind=dist_gp,libsize=li_vec,dat_ind=rep(1:ndata,each=nsample))
+  return(list(data=output_data,par_true=par_true))
+  
+}
+
+output_data<-generate_sim(3000,ndata = 100)
+
+save(output_data,file=paste0("./20210517/data/20210519/","use_data.Rdata"))
+
+M_obs<-output_data$data$M
+M_true<-output_data$data$true_M
+M_true_nz<-M_true[output_data$data$zero_ind==0]
+summary(M_true_nz)
+
+# summary(M_true)
+
+M_gp2<-M_obs[output_data$data$M_ind==0 & output_data$data$zero_ind==0]
+sum(M_gp2==0)/length(M_gp2)
+
+
+mean(M_gp2)
+
+output_data$par_true
+
+
+
+
+

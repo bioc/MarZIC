@@ -1,0 +1,90 @@
+file_loc<-"../20220826/result/20220828_2mix_2conf_test1/"
+file_name<-list.files(file_loc)
+
+true_beta<-c(beta_0,beta_1,beta_2,beta_3,beta_4,beta_5,gamma_0,gamma_1,phi,delta,alpha_0_vec[1],alpha_1_vec[1],
+             beta_conf,alpha_conf,gamma_conf)
+
+# true_beta<-c(beta_0,beta_1,beta_2,beta_3,beta_4,beta_5,gamma_0,gamma_1,phi,delta,alpha_0_vec,alpha_1_vec,
+#              beta_conf,alpha_conf,gamma_conf)
+# med_true<-mediation_effect_cal(true_beta,x_1 = 0, x_2 = 1, confound_mat = )
+
+est_mat<-matrix(nrow=length(file_name),ncol=length(true_beta))
+cov_mat<-matrix(nrow=length(file_name),ncol=length(true_beta))
+cov_med_mat<-matrix(nrow=length(file_name),ncol=4)
+
+
+for (i in 1:length(file_name)) {
+  load(paste0(file_loc,file_name[i]))
+  if (length(res_list$list_save[[1]]$res_fin_med)!=0) {
+    # cat(i)
+    # est_par<-res_list$list_save[[1]]$res_fin_med$par
+    # est_sd<-res_list$list_save[[1]]$res_fin_med$par_sd
+    est_med<-res_list$list_save[[1]]$res_fin_med$mediation_effect
+    med_true<-res_list$med_true
+    est_med_sd<-res_list$list_save[[1]]$res_fin_med$NIE_sd
+    # col_excluede_nz<-c(3, 5, 7, 8, (length(est_par)+1-num_confound):length(est_par))
+    col_excluede_nz<-c((length(est_par)+1-3*num_confound):length(est_par))
+    
+    # 
+    # cov_par<- est_par + 1.96*est_sd > true_beta & est_par - 1.96*est_sd < true_beta
+    # cov_par<- est_par[-col_excluede_nz] + 1.96*est_sd > true_beta[-col_excluede_nz] & est_par[-col_excluede_nz] - 1.96*est_sd < true_beta[-col_excluede_nz]
+    
+    cov_med<- est_med + 1.96*est_med_sd > med_true & est_med - 1.96*est_med_sd < med_true
+    
+    # est_mat[i,]<-est_par
+    # cov_mat[i,]<-cov_par
+    cov_med_mat[i,]<-cov_med
+  }
+
+}
+colMeans(est_mat)-true_beta
+colMeans(cov_mat)
+colMeans(cov_med_mat,na.rm = T)
+
+
+
+
+file_loc<-"../20220826/result/20220828_2mix_no_conf_nz_test1/"
+file_name<-list.files(file_loc)
+
+true_beta<-c(beta_0,beta_1,beta_2,beta_3,beta_4,beta_5,gamma_0,gamma_1,phi,delta,alpha_0_vec,alpha_1_vec,psi_vec,
+             beta_conf,alpha_conf,gamma_conf)
+est_mat<-matrix(nrow=length(file_name),ncol=length(true_beta))
+# cov_mat<-matrix(nrow=length(file_name),ncol=length(true_beta)-3)
+
+cov_mat<-matrix(nrow=length(file_name),ncol=length(true_beta[-col_excluede_nz]))
+cov_med_mat<-matrix(nrow=length(file_name),ncol=4)
+
+
+for (i in 1:length(file_name)) {
+  load(paste0(file_loc,file_name[i]))
+  if (length(res_list$list_save[[1]]$res_fin_med)!=0) {
+    est_par<-res_list$list_save[[1]]$res_fin_med$par
+    est_sd<-res_list$list_save[[1]]$res_fin_med$par_sd
+    est_med<-res_list$list_save[[1]]$res_fin_med$mediation_effect
+    med_true<-res_list$med_true
+    est_med_sd<-res_list$list_save[[1]]$res_fin_med$NIE_sd
+    col_excluede_nz<-c(3, 5, 7, 8, (length(est_par)+1-3*num_confound):length(est_par))
+
+    # cov_par<- est_par + 1.96*est_sd > true_beta & est_par - 1.96*est_sd < true_beta
+    # cov_par<- est_par[1:15] + 1.96*est_sd > true_beta[1:15] & est_par[1:15] - 1.96*est_sd < true_beta[1:15]
+    
+    cov_par<- est_par[-col_excluede_nz] + 1.96*est_sd > true_beta[-col_excluede_nz] & est_par[-col_excluede_nz] - 1.96*est_sd < true_beta[-col_excluede_nz]
+    
+    cov_med<- est_med + 1.96*est_med_sd > med_true & est_med - 1.96*est_med_sd < med_true
+    
+    est_mat[i,]<-est_par
+    cov_mat[i,]<-cov_par
+    cov_med_mat[i,]<-cov_med
+  }
+  
+}
+
+colMeans(cov_mat,na.rm = T)
+
+colMeans(cov_med_mat,na.rm = T)
+
+
+round(colMeans(est_mat,na.rm = T),3)
+format(true_beta,scientific=F,digit=3)
+

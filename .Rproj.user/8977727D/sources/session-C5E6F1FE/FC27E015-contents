@@ -1,0 +1,55 @@
+library(SummarizedExperiment)
+dataM<-data_use[,c("M"),drop = FALSE]
+dataC<-data_use[,c("x","Y","x_conf1","x_conf2","libsize")]
+
+
+test_dat<-SummarizedExperiment(assays=list(MicrobData=t(dataM)), colData=dataC)
+Experiment_dat<-test_dat
+
+
+data_test<-dataList$data[dataList$data$dat_ind==1,]
+taxon_col<-grep("taxon",colnames(data_test))
+dataM<-data_test[,taxon_col,drop = FALSE]
+dataC<-data_test[,c("x","y","libsize")]
+
+
+test_dat<-SummarizedExperiment(assays=list(MicrobData=t(dataM)), colData=dataC)
+Experiment_dat<-test_dat
+
+t1<-Sys.time()
+res_test<-MarZICM(Experiment_dat = test_dat,
+        lib_name = "libsize",
+        y_name = "y",
+        x_name = "x",
+        num_cores = 2,
+        mediator_mix_range = 1)
+t2<-Sys.time()
+
+difftime(t2,t1)
+
+sd(dataM$taxon3)
+
+res_test$NIE1_save
+
+
+####### 
+X <- rbinom(nSub,1,0.5)
+
+M <- rbeta(nSub,1,1)
+
+M[X==0]<-0
+
+test_dat<-SummarizedExperiment(assays=list(MicrobData=t(M)), 
+                               colData=cbind(X,libsize=data_use$libsize,
+                                             Y=data_use$Y))
+
+
+res_test<-MarZICM(Experiment_dat = test_dat,
+                  lib_name = "libsize",
+                  y_name = "Y",
+                  x_name = "X",
+                  num_cores = 1,
+                  mediator_mix_range = 1)
+
+res_test$NIE1_save
+

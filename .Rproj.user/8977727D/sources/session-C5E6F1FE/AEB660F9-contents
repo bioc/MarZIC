@@ -1,0 +1,26 @@
+
+library(NlcOptim)
+library(betareg)
+library(parallel)
+library(pracma)
+library(Rcpp)
+library(penalized)
+library(doParallel)
+library(glmnet)
+
+
+args = commandArgs(T)
+# print("args")
+# print(args)
+rept=as.numeric(args[1])
+
+source("MedZIM_mixture_functions_cpp_include_nz.R")
+load("../../data/20220303_Dir_2/10_taxon_200_2_mediator.Rdata")
+data_use<-dataList$data[dataList$data$dat_ind==rept,]
+# data_use<-data_use[sample(1:1000,500),]
+
+res_list<-apply_real_data_func(taxon_name = "taxon",lib_name = "libsize",y_name = "y",
+                              x_name = "x",data = data_use,k_range = 1:2,num_cores = 5)
+
+save(res_list,file=paste0("../../result/20220303_Dir_2/","Dir_sim_",rept,"_res.Rdata"))
+

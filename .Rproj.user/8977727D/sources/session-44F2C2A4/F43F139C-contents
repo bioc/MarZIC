@@ -1,0 +1,159 @@
+devtools::document()
+devtools::check()
+devtools::build()
+devtools::release()
+
+devtools::install()
+devtools::build_manual()
+
+
+install.packages("../IFAA_1.0.6.tar.gz")
+library(IFAA)
+
+detach("package:rlecuyer",unload = T)
+
+results <- IFAA::IFAA(MicrobData = IFAA::dataM,
+                CovData = IFAA::dataC,
+                linkIDname = "id",
+                testCov = c("v1", "v2"),
+                ctrlCov = c("v3"), nRef = 3,
+                paraJobs = 2,
+                fdrRate = 0.4,
+                bootB = 5)
+
+results$sig_results
+
+results$paraJobs
+
+R_file_loc<- "./R/"
+
+R_file<-list.files(R_file_loc)
+for (i in 1:length(R_file)) {
+  source(paste0(R_file_loc,R_file[i]))
+}
+
+rm(list=lsf.str())
+
+
+libname<-c("qlcMatrix","mathjaxr","methods","picasso","expm","foreach",
+           "Matrix","HDCI","parallel","doParallel","future",
+           "glmnet")
+
+libname<-c("mathjaxr","expm","foreach",
+           "Matrix","HDCI","parallel","doParallel","future",
+           "glmnet","SummarizedExperiment","S4Vectors","stringr",
+           "DescTools", "MatrixExtra","doRNG")
+
+lapply(libname,require, character.only = TRUE)
+
+
+results <- IFAA(MicrobData = IFAA::dataM[1:5,],
+                CovData = IFAA::dataC[1:5,],
+                linkIDname = "id",
+                testCov = c("v1", "v2"),
+                ctrlCov = c("v3"), nRef = 3,
+                paraJobs = 2,
+                fdrRate = 0.4,
+                bootB = 5)
+
+
+mz <- MZILN(MicrobData = IFAA::dataM,
+            CovData = IFAA::dataC,
+            linkIDname = "id",
+            allCov=c("v1","v2","v3"),
+            targetTaxa = "rawCount18",
+            refTaxa=c("rawCount11"),
+            paraJobs=2,
+            fdrRate=0.1)
+
+mz$sig_results
+mz$analysisResults$full_results
+
+token<-"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"
+# results$analysisResults$sig_results
+
+BiocCheck::BiocCheck(`no-check-CRAN`=T)
+
+
+#####
+
+library(SummarizedExperiment)
+library(IFAA)
+# usethis::use_data()
+data(dataM)
+data(dataC)
+test_dat<-SummarizedExperiment(assays=list(counts=dataM), colData=dataC)
+IFAA_res_test<-IFAA(test_dat,
+                    # testCov=c("x1"),ctrlCov=c("x2","x3"),
+                    testCov=c("v1","v2"),ctrlCov=NULL,
+                    nRef=10,paraJobs=8,
+                    nRefMaxForEsti=2,
+                    standardize=T,sequentialRun=F,
+                    adjust_method = "BY",
+                    refReadsThresh=0.2,
+                    SDThresh=0,
+                    SDquantilThresh=0,
+                    balanceCut=0,
+                    fdrRate =0.2,bootB=500,seed=1)
+
+IFAA_res_test$sig_results
+test_dat
+
+###
+
+
+
+
+test_dat<-SummarizedExperiment(assays=list(counts=dataM), colData=dataC)
+results <- MZILN(experiment_dat = test_dat,
+                refTaxa=c("rawCount11"),
+                allCov=c("v1","v2","v3"),
+                fdrRate=0.15)
+summary_res<-results$full_results
+summary_res[summary_res$sig_ind==1,,drop=FALSE]
+
+
+
+data(dataM)
+data(dataC)
+
+test_dat<-SummarizedExperiment(assays=list(counts=dataM), colData=dataC)
+results <- IFAA(experiment_dat = test_dat,
+                testCov = c("v1", "v2"),
+                ctrlCov = c("v3"),
+                fdrRate = 0.15)
+
+## to extract full results:
+summary_res<-results$full_result_mean
+## to extract significant results:
+summary_res[summary_res$sig_ind==1,,drop=FALSE]
+## to extract separate estimates
+results$full_result_sep
+
+results$metadata$final_ref_taxon
+
+
+devtools::install_github("quranwu/IFAA")
+
+rm(IFAA)
+
+
+
+####
+data(dataM)
+data(dataC)
+dataM[dataM==0]<-0.05
+test_dat<-SummarizedExperiment(assays=list(counts=dataM), colData=dataC)
+
+
+# test_dat<-SummarizedExperiment(assays=list(counts=dataM), colData=dataC)
+results <- IFAA(experiment_dat = test_dat,
+                testCov = c("v1", "v2"),
+                ctrlCov = c("v3"),
+                fdrRate = 0.15)
+
+summary_res<-results$full_result_mean
+## to extract significant results:
+summary_res[summary_res$sig_ind==1,,drop=FALSE]
+
+results$metadata$final_ref_taxon

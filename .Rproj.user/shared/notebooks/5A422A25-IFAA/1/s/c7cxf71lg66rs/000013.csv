@@ -1,0 +1,66 @@
+"0","results <- IFAA(experiment_dat = test_dat,
+                testCov = c(""x1"",""x2""),
+                ctrlCov = c(""x3""),
+                sampleIDname=""ID"",
+                fdrRate = 0.05,
+                nRef=2,
+                paraJobs = 2)
+"
+"2","Data dimensions (after removing missing data if any):
+"
+"2","20 samples
+"
+"2","10 taxa/OTU/ASV
+"
+"2","2 testCov variables in the analysis
+"
+"2","These are the testCov variables:
+"
+"2","x1, x2
+"
+"2","1 ctrlCov variables in the analysis 
+"
+"2","These are the ctrlCov variables:
+"
+"2","x3
+"
+"2","1 binary covariates in the analysis
+"
+"2","These are the binary covariates:
+"
+"2","x2 
+"
+"2","25 percent of microbiome sequencing reads are zero
+"
+"2","Start Phase 1 analysis
+"
+"2","2 parallel jobs are registered for the analysis.
+"
+"2","Warning in .Internal(gc(verbose, reset, full)) :"
+"2","
+ "
+"2"," closing unused connection 4 (<-localhost:11998)
+"
+"2","Warning in .Internal(gc(verbose, reset, full)) :"
+"2","
+ "
+"2"," closing unused connection 3 (<-localhost:11998)
+"
+"2","33 percent of phase 1 analysis has been done and it took 0.11 minutes
+"
+"2","2 parallel jobs are registered for the analysis.
+"
+"2","100 percent of phase 1 analysis has been done and it took 0.21 minutes
+"
+"2","Start Phase 2 parameter estimation
+"
+"2","2 parallel jobs are registered for analyzing reference taxa in Phase 2
+"
+"2","50 percent of Phase 2 is done and it took 0.054 minutes
+"
+"2","2 parallel jobs are registered for analyzing reference taxa in Phase 2
+"
+"2","Entire Phase 2 parameter estimation done and took 0.104 minutes.
+"
+"2","The entire analysis took 0.32 minutes
+"

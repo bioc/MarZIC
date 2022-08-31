@@ -1,0 +1,141 @@
+realdata<-read.csv("VSLprocessed_data.csv",header<-T,na.strings <- c("",NA))
+library(DirichletReg)
+set.seed(32608)
+
+expit<-function(x) {
+  exp(x)/(1+exp(x))
+}
+
+
+nDataset<-100
+SampleSiz<-1000
+nTaxa<-25
+
+# beta0_tr<-c(runif(1,-2,-1.5),rep(0,(nTaxa-1)))
+
+beta0_tr<-c(rep(0,nTaxa))
+
+
+beta1_tr<-c(rep(3,1),rep(0,(nTaxa-1)))
+#beta1_tr<-rep(0,nTaxa) # for binary mediator model
+
+beta2_tr<-c(rep(1,1),rep(0,(nTaxa-1)))
+# beta2_tr<-c(6,rep(0,nTaxa-1))
+
+beta3_tr<-c(runif(1,4.5,5.5),rep(0,nTaxa-1))
+
+# beta3_tr<-c(runif(nTaxa,4.5,5.5))
+
+#beta4_tr<-c(3,runif(nTaxa-1,-10,10))
+beta4_tr<-c(rep(1,1),rep(0,nTaxa-1))
+
+beta5_tr<-rep(0,nTaxa)
+delta_tr<-rep(1,nTaxa)
+
+alpha0_tr<-rbind(c(-3.5,3,runif(nTaxa-2,-2,-1)),
+                 c(-2.5,3,runif(nTaxa-2,-2,-1)),
+                 c(-1.5,3,runif(nTaxa-2,-2,-1)))
+
+# alpha1_tr<-c(3,rep(1,2),runif(nTaxa-3,0,1))
+alpha1_tr<-c(1.5,runif(nTaxa-1,-1,1))
+
+#alpha1_tr<-rep(0,nTaxa)
+
+phi<-50
+gamma0_tr<-c(rep(-2,1),1,runif(nTaxa-2,-2,-1))
+gamma1_tr<-c(rep(1,1),runif(nTaxa-1,-1,1))
+
+XandL<-realdata[,c("x","libSiz")]
+
+
+
+data_gen<-function(nDataset,sample_size,nTaxa,beta0,beta1,beta2,beta3,beta4,
+                   beta5,delta,alpha0,alpha1,phi,gamma0,gamma1) {
+  n<-nDataset*sample_size
+  data_mat<-matrix(nrow = n,ncol = 2*nTaxa+3)
+  taxon_name<-paste0("taxon",1:nTaxa)
+  zero_ind_name<-paste0("zero_ind",1:nTaxa)
+  
+  colnames(data_mat)<-c("libsize","x","y",taxon_name,zero_ind_name)
+  
+  for (i in 1:n) {
+    xi<-rbinom(1,1,0.5)
+    Delta<-expit(gamma0+gamma1*xi)
+    zero_ind<-rbinom(length(Delta),1,Delta)
+    trm<-numeric((nTaxa))
+    
+    non_zero_loc<-which(zero_ind==0)
+    
+    alpha_pick_ind<-sample(1:3,1,prob = c(1/3,1/3,1/3))
+    alpha0_picked<-alpha0[alpha_pick_ind,]
+    
+    alpha0_non_zero<-alpha0_picked[non_zero_loc]
+    alpha1_non_zero<-alpha1[non_zero_loc]
+    
+    meanAll<-exp(alpha0_non_zero[-length(alpha0_non_zero)]+alpha1_non_zero[-length(alpha0_non_zero)]*xi)/
+      (1+sum(exp(alpha0_non_zero[-length(alpha0_non_zero)]+alpha1_non_zero[-length(alpha0_non_zero)]*xi)))
+    meanAll[length(alpha0_non_zero)]<-1-sum(meanAll)
+    scaleAll<-meanAll*phi
+    trm_non_zero=rdirichlet(1,scaleAll)
+    
+    trm[non_zero_loc]<-trm_non_zero
+    non_zero_ind<-(1-zero_ind)
+    
+    Y<-sum(beta0+beta1*trm+beta2*non_zero_ind+beta3*xi+
+               beta4*xi*non_zero_ind+beta5*xi*trm)
+    
+    eps<-rnorm(1,0,delta)
+    
+    Y_obs<-Y+eps
+    
+    Li<-sample(XandL[,2], 1)
+    
+    # Li<-Li/100
+    
+    R<-rep(1,length(trm))
+    
+    
+    R<-(Li*trm>1)
+    #R=1
+    
+    obs_m<-trm*R
+    # M=tru.m
+    fz_ind<-R==0 & trm>0
+    num_nz<-num_nz+sum(fz_ind)
+    num_nz_1<-num_nz_1+fz_ind[1]
+    dat_sub<-c(Li,xi,Y_obs,obs_m,zero_ind)
+    data_mat[i,]<-dat_sub
+  }
+  cat(" num_nz ",num_nz," num_nz_1 ",num_nz_1)
+  
+  data_mat<-as.data.frame(data_mat)
+  data_mat$dat_ind<-rep(1:nDataset,each=sample_size)
+
+  theta_mat<-rbind(beta0,beta1,beta2,beta3,beta4,beta5,
+                  delta,alpha0,alpha1,phi,gamma0,gamma1)
+  
+  dataList<-list(data_mat,theta_mat)
+  return(dataList)
+}
+
+dataList<-data_gen(nDataset = nDataset,SampleSiz,nTaxa,beta0_tr,beta1_tr,beta2_tr,beta3_tr,beta4_tr,beta5_tr,
+         delta_tr,alpha0_tr,alpha1_tr,phi,gamma0_tr,gamma1_tr)
+# trace(data_gen(nDataset = nDataset,SampleSiz,nTaxa,beta0_tr,beta1_tr,beta2_tr,beta3_tr,beta4_tr,beta5_tr,
+#                delta_tr,alpha0_tr,alpha1_tr,phi,gamma0_tr,gamma1_tr))
+
+data_test<-dataList[[1]]
+hist(data_test$taxon1[data_test$taxon1!=0])
+glm1<-glm(y~taxon1+(taxon1>0)+x+x*(taxon1>0)+x*taxon1,data=data_test[data_test$dat_ind==1,])
+summary(glm1)
+mean(data_test$taxon1[data_test$taxon1!=0])
+sum(data_test$taxon1==0)
+save(dataList,file = "./20210529/data/20210529/25taxon_300sample_1_mediator.Rdata")
+
+
+
+#######
+
+data_test<-dataList$data
+data_test$taxon1
+glm1<-glm(y1~taxon1+(taxon1>0)+x+x*(taxon1>0)+x*taxon1,data=data_test[data_test$rep_ID==1,])
+summary(glm1)

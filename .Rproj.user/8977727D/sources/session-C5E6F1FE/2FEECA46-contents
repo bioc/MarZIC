@@ -1,0 +1,6 @@
+compileAttributes()
+devtools::document()
+roxygen2::roxygenise()
+
+devtools::check()
+devtools::install()

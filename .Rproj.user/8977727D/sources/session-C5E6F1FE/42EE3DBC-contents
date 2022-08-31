@@ -1,0 +1,185 @@
+library(Rcpp)
+sourceCpp("Q_theta_cpp_include_nz.cpp")
+
+
+library(NlcOptim)
+library(betareg)
+library(parallel)
+library(pracma)
+library(penalized)
+library(doParallel)
+library(glmnet)
+library(doRNG)
+
+
+
+args = commandArgs(T)
+# print("args")
+# print(args)
+rept=as.numeric(args[1])
+
+R_file_loc<- "./R/"
+R_file<-list.files(R_file_loc)
+for (i in 1:length(R_file)) {
+  source(paste0(R_file_loc,R_file[i]))
+}
+# sourceCpp("Q_theta_cpp_include_nz.cpp")
+
+set.seed(rept)
+
+beta_0<- -5
+beta_1<-100
+beta_2<-5
+beta_3<-1
+beta_4<-1
+beta_5<-1
+beta_conf<-1
+# alpha_01<- -0.5
+# alpha_11<- -0.3
+# alpha_02<-0.5
+# alpha_12<-0.3
+
+# alpha_01<- -1
+# alpha_11<- 0.5
+# alpha_02<- -5
+# alpha_12<- 0.5
+
+gamma_0<- 0
+gamma_1<- -0.3
+gamma_conf<-0.1
+# gamma_0<--5
+# gamma_1<- -5
+phi<-10
+# psi<-0.4
+delta<-1
+
+alpha_0_vec<-c(-1,-5)
+alpha_1_vec<-c(0.5,0.5)
+alpha_conf<-0.1
+psi_vec<-c(0.5)
+
+# par_true<-c(beta_0,beta_1,beta_2,beta_3,beta_4,beta_5,gamma_0,gamma_1,phi,delta,alpha_0_vec,alpha_1_vec,psi_vec)
+
+#
+# nsample<-300
+# ndata<-100
+#
+# beta_dist_trans<-function(mu,phi) {
+#   alpha<-mu*phi
+#   beta<-phi-mu*phi
+#   return(c(alpha,beta))
+# }
+
+realdata=read.csv("VSLprocessed_data.csv",header=T,na.strings = c("",NA))
+Libsize<-realdata$libSiz
+
+generate_sim<-function(nsample,ndata=100) {
+  par_true<-c(beta_0,beta_1,beta_2,beta_3,beta_4,beta_5,gamma_0,gamma_1,phi,delta,alpha_0_vec,alpha_1_vec,psi_vec,
+              beta_conf,alpha_conf,gamma_conf)
+
+  n_total<-nsample*ndata
+  x_i<-rbinom(n_total,1,0.5)
+  x_conf<-rnorm(n_total)
+  mu<-apply(cbind(x_i,x_conf),1,function(x) expit(alpha_0_vec+alpha_1_vec*x[1]+alpha_conf*x[2]))
+  # mu<-expit(alpha_0_vec+alpha_1_vec*x_i)
+  # mu_2<-expit(alpha_02+alpha_12*x_i)
+  Delta<-expit(gamma_0+gamma_1*x_i+gamma_conf*x_conf)
+
+
+
+  psi_vec_total<-c(psi_vec,1-sum(psi_vec))
+
+  dist_gp<-sample(seq_len(length(alpha_0_vec)),n_total,psi_vec_total,replace = T)
+  zero_gp<-rbinom(n_total,1,Delta)
+  tru_m_vec<-numeric(n_total)
+  for(i in 1:n_total) {
+    if(zero_gp[i]==1) {
+      tru_m<-0
+    } else {
+      dist_gp_ind<-dist_gp[i]
+      mu_use<-mu[dist_gp_ind,i]
+      tru_m<-rbeta(1,mu_use*phi,(1-mu_use)*phi)
+    }
+    tru_m_vec[i]<-tru_m
+  }
+
+  epis<-rnorm(n_total,sd=delta)
+  Y_vec<-beta_0+beta_1*tru_m_vec+beta_2*(tru_m_vec>0)+
+    beta_3*x_i+beta_4*x_i*(tru_m_vec>0)+beta_5*x_i*tru_m_vec + beta_conf*x_conf+epis
+
+  ## False zero
+  li_vec<-sample(Libsize,n_total,replace = T)
+  false_zero_obs<-(tru_m_vec*li_vec)>1
+  obs_m<-tru_m_vec*false_zero_obs
+  num_false_zero<-sum(tru_m_vec!=obs_m)
+  cat("number of false zero ",num_false_zero)
+
+  obs_m<-tru_m_vec
+
+  output_data<-data.frame(x=x_i,x_conf=x_conf,Y=Y_vec,M=obs_m,true_M=tru_m_vec,zero_ind=zero_gp,
+                          M_ind=dist_gp,libsize=li_vec,dat_ind=rep(1:ndata,each=nsample))
+  return(list(data=output_data,par_true=par_true))
+
+}
+
+output_data<-generate_sim(200,ndata = 100)
+data_use<-output_data$data[output_data$data$dat_ind==1,-c(5,7)]
+
+# true_beta <-
+#   c(
+#     beta_0,
+#     beta_1,
+#     beta_2,
+#     beta_3,
+#     beta_4,
+#     beta_5,
+#     gamma_0,
+#     gamma_1,
+#     phi,
+#     delta,
+#     alpha_0_vec[1],
+#     alpha_1_vec[1],
+#     beta_conf,
+#     alpha_conf,
+#     gamma_conf
+#   )
+
+true_beta <-
+  c(
+    beta_0,
+    beta_1,
+    beta_2,
+    beta_3,
+    beta_4,
+    beta_5,
+    gamma_0,
+    gamma_1,
+    phi,
+    delta,
+    alpha_0_vec,
+    alpha_1_vec,
+    psi_vec,
+    beta_conf,
+    alpha_conf,
+    gamma_conf
+  )
+med_true<-mediation_effect_cal(true_beta,x_1 = 0, x_2 = 1, confound_mat = data_use[,"x_conf",drop = FALSE])
+
+
+res_list <-
+  apply_real_data_func(
+    taxon_name = "M",
+    lib_name = "libsize",
+    y_name = "Y",
+    x_name = "x",
+    conf_name = "x_conf",
+    data = data_use,
+    k_range = 2,
+    num_cores = 1
+  )
+
+res_list$med_true<-med_true
+save(res_list,file=paste0("../../result/20220826_2mix_test1/","Dir_sim_",rept,"_res.Rdata"))
+
+
+

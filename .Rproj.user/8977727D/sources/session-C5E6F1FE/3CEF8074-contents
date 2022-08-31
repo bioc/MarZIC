@@ -1,0 +1,100 @@
+#' Marginal Mediation Model for Zero-Inflated Compositional Mediators
+#'
+#' Run MarZIC and MarZICM
+#'
+#' @param data    Dataset
+#' @param taxon_name    Name of taxon
+#' @param lib_name      Name of library size variable
+#' @param y_name   Name of outcome
+#' @param x_name Name of covaraite of interest
+#' @param k_range Number of mixture
+#' @param num_cores Number of CPU cores to use in parallelization task
+#' @param adjust_method P value adjustment method
+#' @param fdr_rate FDR cutoff
+#'
+#' @return
+#' A `list` of length `n_sim` containing the mean for each distribution.
+#'
+#' @export
+#'
+#' @importFrom foreach foreach %dopar% registerDoSEQ
+#' @importFrom doRNG %dorng%
+#' @importFrom parallelly availableCores
+#' @importFrom parallel makeCluster clusterExport stopCluster clusterSetRNGStream
+#' @importFrom doParallel registerDoParallel
+#' @importFrom NlcOptim solnl
+#' @importFrom betareg betareg
+#'
+#'
+#'
+
+
+
+MarZICM<-function(data,
+                  taxon_name,
+                  lib_name,
+                  y_name,
+                  x_name,
+                  conf_name,
+                  k_range,
+                  num_cores,
+                  adjust_method="fdr",
+                  fdr_rate=0.2) {
+  res_list <-
+    apply_real_data_func(
+      taxon_name = taxon_name,
+      lib_name = lib_name,
+      y_name = y_name,
+      x_name = x_name,
+      conf_name = conf_name,
+      data = data,
+      k_range = k_range,
+      num_cores = num_cores
+    )
+  nTaxa<-res_list$nTaxa
+  nSub<-res_list$nSub
+
+  NIE1_save<-data.frame(matrix(nrow = nTaxa, ncol = 6))
+  NIE2_save<-data.frame(matrix(nrow = nTaxa, ncol = 6))
+  NDE_save<-data.frame(matrix(nrow = nTaxa, ncol = 6))
+  NIE_save<-data.frame(matrix(nrow = nTaxa, ncol = 6))
+
+  for (i in seq_len(length(res_list$list_save))) {
+    res_temp<-res_list$list_save[[i]]$res_fin_med
+    NIE1_save[i,1]<-res_temp$mediation_effect[1]
+    NIE2_save[i,1]<-res_temp$mediation_effect[2]
+    NDE_save[i,1]<-res_temp$mediation_effect[3]
+    NIE_save[i,1]<-res_temp$mediation_effect[4]
+
+    NIE1_save[i,2]<-res_temp$NIE_sd[1]
+    NIE2_save[i,2]<-res_temp$NIE_sd[2]
+    NDE_save[i,2]<-res_temp$NIE_sd[3]
+    NIE_save[i,2]<-res_temp$NIE_sd[4]
+
+    NIE1_save[i,3]<-res_temp$mediation_effect[1]-1.96*res_temp$NIE_sd[1]
+    NIE2_save[i,3]<-res_temp$mediation_effect[2]-1.96*res_temp$NIE_sd[2]
+    NDE_save[i,3]<-res_temp$mediation_effect[3]-1.96*res_temp$NIE_sd[3]
+    NIE_save[i,3]<-res_temp$mediation_effect[4]-1.96*res_temp$NIE_sd[4]
+
+    NIE1_save[i,4]<-res_temp$mediation_effect[1]+1.96*res_temp$NIE_sd[1]
+    NIE2_save[i,4]<-res_temp$mediation_effect[2]+1.96*res_temp$NIE_sd[2]
+    NDE_save[i,4]<-res_temp$mediation_effect[3]+1.96*res_temp$NIE_sd[3]
+    NIE_save[i,4]<-res_temp$mediation_effect[4]+1.96*res_temp$NIE_sd[4]
+  }
+
+  NIE1_save[,5]<-p.adjust((1-pnorm(abs(NIE1_save[,1]/NIE1_save[,2])))*2,adjust_method)
+  NIE2_save[,5]<-p.adjust((1-pnorm(abs(NIE2_save[,1]/NIE2_save[,2])))*2,adjust_method)
+  NDE_save[,5]<-p.adjust((1-pnorm(abs(NDE_save[,1]/NDE_save[,2])))*2,adjust_method)
+  NIE_save[,5]<-p.adjust((1-pnorm(abs(NIE_save[,1]/NIE_save[,2])))*2,adjust_method)
+
+  NIE1_save[,6]<- NIE1_save[,5] < fdr_rate
+  NIE2_save[,6]<-NIE2_save[,5] < fdr_rate
+  NDE_save[,6]<-NDE_save[,5] < fdr_rate
+  NIE_save[,6]<-NIE_save[,5] < fdr_rate
+
+
+
+
+}
+
+
