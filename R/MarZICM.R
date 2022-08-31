@@ -53,7 +53,7 @@
 ##' library(SummarizedExperiment)
 ##' ## A make up example with 1 taxon and 100 subjects.
 ##' set.seed(1)
-##' nSub<-100
+##' nSub<-200
 ##' ## generate covariate of interest X
 ##' X <- rbinom(nSub,1,0.5)
 ##' ## generate mean of mediator M
@@ -65,12 +65,13 @@
 ##' libsize <- 10000
 ##' ## generate observed zero, both structure zero and zero due to LOD mechanism
 ##' non_zero_ind <- 1 - rbinom(nSub,1,exp(0.3*X)/(1+exp(0.3*X)))
-##' obs_m<-M * ((M * libsize)>1) * non_zero_ind
+##' tru_m<-M * non_zero_ind
+##' obs_m<-tru_m* ((M * libsize)>1)
 ##' ## generate outcome Y
-##' Y <- 1 + 100 * M + (M > 0) + X
+##' Y <- 1 + 100 * tru_m + (tru_m > 0) + X
 ##' ## Construct SummerizedExperiment object
 ##' CovData <- cbind(Y=Y,X=X,libsize=libsize)
-##' test_dat <- SummarizedExperiment(assays=list(MicrobData=t(M)),colData=CovData)
+##' test_dat <- SummarizedExperiment(assays=list(MicrobData=t(obs_m)),colData=CovData)
 ##' res<-MarZICM(Experiment_dat = test_dat,
 ##' lib_name = "libsize",
 ##' y_name = "Y",

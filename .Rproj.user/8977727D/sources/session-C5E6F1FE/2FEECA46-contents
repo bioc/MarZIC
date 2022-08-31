@@ -4,3 +4,5 @@ roxygen2::roxygenise()
 
 devtools::check()
 devtools::install()
+
+token<-"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"
