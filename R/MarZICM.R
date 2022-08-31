@@ -82,6 +82,8 @@
 ##' NIE1 <- res$NIE1
 ##' subset(NIE1,significance == TRUE)
 ##' }
+##' @references Wu et al.(2022) MarZIC: A Marginal Mediation Model for Zero-Inflated Compositional Mediators with Applications to Microbiome Data. Genes 2022, 13, 1049.
+##'
 ##'
 ##' @importFrom foreach foreach %dopar% registerDoSEQ
 ##' @importFrom parallel makeCluster clusterExport stopCluster clusterSetRNGStream detectCores
