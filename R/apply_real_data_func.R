@@ -38,30 +38,22 @@ apply_real_data_func <-
         if (k == 1) {
           if (sum(obs_m_vec == 0) > (0.1 * length(obs_m_vec))) {
             res_temp <-
-              try(
-                real_data_run_func_nomix(yi_vec, obs_m_vec, xi_vec, li_vec, conf_mat, k),
-                T
-              )
+              try(real_data_run_func_nomix(yi_vec, obs_m_vec, xi_vec, li_vec, conf_mat, k),
+                  TRUE)
           } else {
             res_temp <-
-              try(
-                real_data_run_func_nz_nomix(yi_vec, obs_m_vec, xi_vec, li_vec, conf_mat, k),
-                T
-              )
+              try(real_data_run_func_nz_nomix(yi_vec, obs_m_vec, xi_vec, li_vec, conf_mat, k),
+                  TRUE)
           }
         } else {
           if (sum(obs_m_vec == 0) > (0.1 * length(obs_m_vec))) {
             res_temp <-
-              try(
-                real_data_run_func(yi_vec, obs_m_vec, xi_vec, li_vec, conf_mat, k),
-                T
-              )
+              try(real_data_run_func(yi_vec, obs_m_vec, xi_vec, li_vec, conf_mat, k),
+                  TRUE)
           } else {
             res_temp <-
-              try(
-                real_data_run_func_nz(yi_vec, obs_m_vec, xi_vec, li_vec, conf_mat, k),
-                T
-              )
+              try(real_data_run_func_nz(yi_vec, obs_m_vec, xi_vec, li_vec, conf_mat, k),
+                  TRUE)
           }
         }
         if (inherits(res_temp, "try-error")) {

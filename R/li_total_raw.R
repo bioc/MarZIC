@@ -1,6 +1,6 @@
 li_total_raw <- function(para_vec, yi_vec, obs_m_vec, xi_vec, li_vec, confound_mat) {
   lk_value_vec <- numeric(length(yi_vec))
-  for (i in 1:length(yi_vec)) {
+  for (i in seq_len(length(yi_vec))) {
     yi <- yi_vec[i]
     obs_m <- obs_m_vec[i]
     xi <- xi_vec[i]
@@ -14,7 +14,7 @@ li_total_raw <- function(para_vec, yi_vec, obs_m_vec, xi_vec, li_vec, confound_m
       lk_value_temp <- li_2_raw_func(para_vec, yi, xi, li, confound_vec)
       lk_value_vec[i] <- lk_value_temp
     } else {
-      print("negative m")
+      warning("negative m")
     }
   }
   li_total <- -sum(lk_value_vec)

@@ -1,19 +1,3 @@
-# MarZICM
-
-## Overview
-This package provides a way to calculate marginal mediation effects with microbiome data as mediators. The mediator should be compositional data or count data which will be rescaled later on, and could be zero-inflated. The marginal mediation effect will be calculated for each taxon separately.
-
-## Installation
-```r
-## From GitHub: 
-devtools::install_github("quranwu/MarZICM")
-```
-
-## Usage
-
-The example data was built from scratch, with 200 observations and 10 taxon. 
-
-```r
 library(MarZICM)
 library(SummarizedExperiment)
 library(dirmult)
@@ -53,23 +37,18 @@ CovData <- cbind(Y = Y, X = X, libsize = libsize)
 test_dat <-
   SummarizedExperiment(assays = list(MicrobData = t(observed_RA)), colData = CovData)
 
-## run the analysis
-res <- MarZICM(
-  Experiment_dat = test_dat,
-  lib_name = "libsize",
-  y_name = "Y",
-  x_name = "X",
-  num_cores = 1,
-  mediator_mix_range = 1
-)
-```
-Once the analysis is done, `res` is a list with four elements, each for NIE$_1$, NIE$_2$, NDE, NIE, respectively. The NIE$_1$, for example, could be extracted as: 
+test_IFAA <- function() {
+  res <- MarZICM(
+    Experiment_dat = test_dat,
+    lib_name = "libsize",
+    y_name = "Y",
+    x_name = "X",
+    num_cores = 1,
+    mediator_mix_range = 1
+  )
 
-```r
-NIE1 <- res$NIE1_save
-```
-And the significant result could be extracted as: 
-```r
-subset(NIE1,significance == TRUE)
-```
+  NIE1 <- res$NIE1_save
+  sig_results<-subset(NIE1,significance==TRUE)
+  checkEquals(rownames(sig_results), c("rawCount1"))
 
+}

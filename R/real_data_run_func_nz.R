@@ -71,13 +71,13 @@ real_data_run_func_nz <-
       alpha1_temp <- theta1[(11 + k):(10 + 2 * k)]
       psi_temp <- theta1[(11 + 2 * k):(9 + 3 * k)]
       psi_temp1 <- c(psi_temp, (1 - sum(psi_temp)))
-      alpha0_temp_order <- order(alpha0_temp, decreasing = T)
+      alpha0_temp_order <- order(alpha0_temp, decreasing = TRUE)
       psi_temp_fin <- psi_temp1[alpha0_temp_order]
 
       theta1[11:(10 + k)] <- alpha0_temp[alpha0_temp_order]
       theta1[(11 + k):(10 + 2 * k)] <-
         alpha1_temp[alpha0_temp_order]
-      theta1[(11 + 2 * k):(9 + 3 * k)] <- psi_temp_fin[1:(k - 1)]
+      theta1[(11 + 2 * k):(9 + 3 * k)] <- psi_temp_fin[seq_len(k - 1)]
       # cat("theta1",theta1,"\n")
 
       # if (theta1[7]<theta1[9]) {
@@ -188,7 +188,7 @@ real_data_run_func_nz <-
       NIE_sd <-
         try(sqrt(diag(est1$Med_jac[, -col_exclude] %*%
           solve(est1$hess_est[-col_exclude, -col_exclude]) %*%
-          t(est1$Med_jac[, -col_exclude]))), T)
+          t(est1$Med_jac[, -col_exclude]))), TRUE)
 
 
       est1$NIE_sd <- NIE_sd
@@ -197,7 +197,7 @@ real_data_run_func_nz <-
       col_exclude <- c(3, 5, 7, 8, (length(est1$par) + 1 - num_confound):length(est1$par))
 
       NIE_sd <-
-        try(sqrt(diag(est1$Med_jac %*% solve(est1$hess_est) %*% t(est1$Med_jac))), T)
+        try(sqrt(diag(est1$Med_jac %*% solve(est1$hess_est) %*% t(est1$Med_jac))), TRUE)
 
 
       est1$NIE_sd <- NIE_sd

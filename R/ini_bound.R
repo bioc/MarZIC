@@ -3,7 +3,7 @@ ini_bound <- function(yi_vec, m_star_vec, x_i_vec, k) {
   ind_M <- as.numeric(m_star_vec > 0)
   Y_mod <- glm(yi_vec ~ m_star_vec + ind_M + x_i_vec + x_i_vec * ind_M + x_i_vec * m_star_vec, family = "gaussian")
   Y_mod_ini <- as.numeric(Y_mod$coefficients)
-  ini_par[1:6] <- Y_mod_ini
+  ini_par[seq_len(6)] <- Y_mod_ini
 
   ### kmeans to group
   m_nz <- m_star_vec[m_star_vec > 0]
@@ -15,7 +15,7 @@ ini_bound <- function(yi_vec, m_star_vec, x_i_vec, k) {
   psi_est_vec <- numeric(k)
   phi_est_vec <- numeric(k)
 
-  for (i in 1:k) {
+  for (i in seq_len(k)) {
     m_gp <- m_nz[gp_res == i]
     x_gp <- x_i_nz[gp_res == i]
 
@@ -37,7 +37,7 @@ ini_bound <- function(yi_vec, m_star_vec, x_i_vec, k) {
     # beta_gp2<-as.numeric(beta_mod2$coefficients$mean)
   }
 
-  alpha_0_sort <- order(alpha_0_vec, decreasing = T)
+  alpha_0_sort <- order(alpha_0_vec, decreasing = TRUE)
   alpha_0_sorted <- alpha_0_vec[alpha_0_sort]
   alpha_1_sorted <- alpha_1_vec[alpha_0_sort]
   psi_est_sorted <- psi_est_vec[alpha_0_sort]
@@ -46,7 +46,7 @@ ini_bound <- function(yi_vec, m_star_vec, x_i_vec, k) {
   M_mod <- glm((1 - ind_M) ~ x_i_vec, family = "binomial")
   Del_est <- as.numeric(M_mod$coefficients)
   ini_par[7:8] <- Del_est
-  phi_est <- mean(phi_est_vec, na.rm = T)
+  phi_est <- mean(phi_est_vec, na.rm = TRUE)
   if (is.na(phi_est)) {
     phi_est <- 10
   }
@@ -55,7 +55,7 @@ ini_bound <- function(yi_vec, m_star_vec, x_i_vec, k) {
 
   ini_par[11:(10 + k)] <- alpha_0_sorted
   ini_par[(11 + k):(10 + 2 * k)] <- alpha_1_sorted
-  ini_par[(11 + 2 * k):(9 + 3 * k)] <- psi_est_sorted[1:(k - 1)]
+  ini_par[(11 + 2 * k):(9 + 3 * k)] <- psi_est_sorted[seq_len(k - 1)]
 
 
 

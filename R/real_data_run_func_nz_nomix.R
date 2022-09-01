@@ -108,7 +108,7 @@ real_data_run_func_nz_nomix <-
       NIE_sd <-
         try(sqrt(diag(est1$Med_jac[, -col_exclude] %*%
           solve(est1$hess_est[-col_exclude, -col_exclude]) %*%
-          t(est1$Med_jac[, -col_exclude]))), T)
+          t(est1$Med_jac[, -col_exclude]))), TRUE)
 
 
       est1$NIE_sd <- NIE_sd
@@ -117,7 +117,7 @@ real_data_run_func_nz_nomix <-
       col_exclude <- c(3, 5, 7, 8, (length(est1$par) + 1 - num_confound):length(est1$par))
 
       NIE_sd <-
-        try(sqrt(diag(est1$Med_jac %*% solve(est1$hess_est) %*% t(est1$Med_jac))), T)
+        try(sqrt(diag(est1$Med_jac %*% solve(est1$hess_est) %*% t(est1$Med_jac))), TRUE)
 
 
       est1$NIE_sd <- NIE_sd

@@ -98,7 +98,7 @@ real_data_run_func_nomix <-
           est1$Med_jac[, -col_exclude] %*%
             solve(est1$hess_est[-col_exclude, -col_exclude]) %*%
             t(est1$Med_jac[, -col_exclude])
-        )), T)
+        )), TRUE)
 
 
       est1$NIE_sd <- NIE_sd
@@ -106,7 +106,7 @@ real_data_run_func_nomix <-
         sqrt(diag(solve(est1$hess_est[-col_exclude, -col_exclude])))
     } else {
       NIE_sd <-
-        try(sqrt(diag(est1$Med_jac %*% solve(est1$hess_est) %*% t(est1$Med_jac))), T)
+        try(sqrt(diag(est1$Med_jac %*% solve(est1$hess_est) %*% t(est1$Med_jac))), TRUE)
 
 
       est1$NIE_sd <- NIE_sd

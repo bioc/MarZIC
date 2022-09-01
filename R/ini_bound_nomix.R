@@ -3,7 +3,7 @@ ini_bound_nomix <- function(yi_vec, m_star_vec, x_i_vec, k) {
   ind_M <- as.numeric(m_star_vec > 0)
   Y_mod <- glm(yi_vec ~ m_star_vec + ind_M + x_i_vec + x_i_vec * ind_M + x_i_vec * m_star_vec, family = "gaussian")
   Y_mod_ini <- as.numeric(Y_mod$coefficients)
-  ini_par[1:6] <- Y_mod_ini
+  ini_par[seq_len(6)] <- Y_mod_ini
 
   ### kmeans to group
   m_nz <- m_star_vec[m_star_vec > 0]

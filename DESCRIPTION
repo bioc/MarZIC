@@ -11,16 +11,16 @@ Authors@R: c(person(given = "Quran",
            role = c("aut", "cre"),
            email = "lzg2151@gmail.com")
            )
-Description: This package provides a way to calculate marginal mediation effects with microbiome data as mediators. The mediator should be compositional data, and could be zero-inflated. The marginal mediation effect will be calculated for each taxon separately. 
+Description: This package provides a way to calculate marginal mediation effects with microbiome data as mediators. The mediator should be compositional data or count data which will be rescaled later on, and could be zero-inflated. The marginal mediation effect will be calculated for each taxon separately. 
 URL: https://www.mdpi.com/2073-4425/13/6/1049
-License: GPL (>= 2)
+License: GPL-2
 Imports: Rcpp (>= 1.0.9), NlcOptim, S4Vectors, SummarizedExperiment, 
-         betareg, doParallel, foreach, pracma, mathjaxr
-Suggests: knitr, rmarkdown, RUnit, BiocGenerics
+         betareg, doParallel, foreach, pracma, mathjaxr, dirmult, stats, parallel
+Suggests: knitr, rmarkdown, RUnit, BiocGenerics, BiocStyle
+biocViews: Software, Technology, Sequencing, Microbiome
 VignetteBuilder: knitr
 RdMacros: mathjaxr
-LinkingTo: Rcpp
+LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 7.2.1
 Encoding: UTF-8
 NeedsCompilation: no
-
