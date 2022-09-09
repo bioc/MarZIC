@@ -2,22 +2,22 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 li_1_func <- function(para_vec, yi, m_star, x_i, confound_vec) {
-    .Call('_MarZICM_li_1_func', PACKAGE = 'MarZICM', para_vec, yi, m_star, x_i, confound_vec)
+    .Call(`_MarZIC_li_1_func`, para_vec, yi, m_star, x_i, confound_vec)
 }
 
 Q_theta_cpp <- function(para_vec_ori, para_vec_0_ori, yi_vec, m_star_vec, x_i_vec, l_i_vec, confound_mat) {
-    .Call('_MarZICM_Q_theta_cpp', PACKAGE = 'MarZICM', para_vec_ori, para_vec_0_ori, yi_vec, m_star_vec, x_i_vec, l_i_vec, confound_mat)
+    .Call(`_MarZIC_Q_theta_cpp`, para_vec_ori, para_vec_0_ori, yi_vec, m_star_vec, x_i_vec, l_i_vec, confound_mat)
 }
 
 Q_theta_cpp_nz <- function(para_vec_ori, para_vec_0_ori, yi_vec, m_star_vec, x_i_vec, l_i_vec, confound_mat) {
-    .Call('_MarZICM_Q_theta_cpp_nz', PACKAGE = 'MarZICM', para_vec_ori, para_vec_0_ori, yi_vec, m_star_vec, x_i_vec, l_i_vec, confound_mat)
+    .Call(`_MarZIC_Q_theta_cpp_nz`, para_vec_ori, para_vec_0_ori, yi_vec, m_star_vec, x_i_vec, l_i_vec, confound_mat)
 }
 
 Q_theta_cpp_nomix <- function(para_vec_ori, yi_vec, m_star_vec, x_i_vec, l_i_vec, confound_mat) {
-    .Call('_MarZICM_Q_theta_cpp_nomix', PACKAGE = 'MarZICM', para_vec_ori, yi_vec, m_star_vec, x_i_vec, l_i_vec, confound_mat)
+    .Call(`_MarZIC_Q_theta_cpp_nomix`, para_vec_ori, yi_vec, m_star_vec, x_i_vec, l_i_vec, confound_mat)
 }
 
 Q_theta_cpp_nz_nomix <- function(para_vec_ori, yi_vec, m_star_vec, x_i_vec, l_i_vec, confound_mat) {
-    .Call('_MarZICM_Q_theta_cpp_nz_nomix', PACKAGE = 'MarZICM', para_vec_ori, yi_vec, m_star_vec, x_i_vec, l_i_vec, confound_mat)
+    .Call(`_MarZIC_Q_theta_cpp_nz_nomix`, para_vec_ori, yi_vec, m_star_vec, x_i_vec, l_i_vec, confound_mat)
 }
 

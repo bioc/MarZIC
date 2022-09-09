@@ -92,7 +92,7 @@ NumericVector li_1_func(NumericVector para_vec, double yi, double m_star,
 
   NumericVector mu=expit(alpha_0_vec+alpha_1_vec*x_i+sum(confound_vec*alpha_conf));
   double delta_i=gamma_0+gamma_1*x_i+sum(confound_vec*gamma_conf);
-  
+
   double norm_part=pow(yi-beta_0-beta_1*m_star-beta_2-(beta_3+beta_4)*x_i-
                        beta_5*x_i*m_star-sum(confound_vec*beta_conf),2)/(2*delta*delta);
   NumericVector li_1_value= -0.5*log(2*M_PI)-log(delta)-norm_part+
@@ -108,7 +108,7 @@ NumericVector li_1_func(NumericVector para_vec, double yi, double m_star,
 
 
   // Rcout << " li_1_value " << li_1_value << " norm_part " << norm_part << " mu " << mu <<
-  //   " beta_part " << beta_part << " psi_vec " << psi_vec << 
+  //   " beta_part " << beta_part << " psi_vec " << psi_vec <<
   //     "delta_i " << delta_i << "\n";
   return li_1_res;
 }
@@ -116,7 +116,7 @@ NumericVector li_1_func(NumericVector para_vec, double yi, double m_star,
 double li0_2_func(NumericVector para_vec,double yi,double x_i,NumericVector confound_vec) {
   int num_conf=confound_vec.size();
   int k=(para_vec.size()-9-3*num_conf)/3;
-  
+
   double beta_0=para_vec[0];
   // double beta_1=para_vec[1];
   // double beta_2=para_vec[2];
@@ -150,10 +150,10 @@ double li0_2_func(NumericVector para_vec,double yi,double x_i,NumericVector conf
   } else {
     return_value=delta_i-log(1+exp(delta_i));
   }
-  
-  
+
+
   return return_value + li0_2_value;
-  
+
 }
 
 
@@ -162,7 +162,7 @@ NumericVector li_2_func(NumericVector para_vec,double yi,double x_i,double l_i,
                         NumericVector confound_vec) {
   int num_conf=confound_vec.size();
   int k=(para_vec.size()-9-3*num_conf)/3;
-  
+
 
   double beta_0=para_vec[0];
   double beta_1=para_vec[1];
@@ -206,15 +206,15 @@ NumericVector li_2_func(NumericVector para_vec,double yi,double x_i,double l_i,
   NumericVector li1_2_value= -0.5*log(2*M_PI) - log(delta) + const_part + log(int_value);
   // NumericVector Psi1=(1-delta_i)*psi_vec;
   // NumericVector li_2_res=log(Psi1) + li1_2_value;
-  
+
   NumericVector li_2_res;
   if(delta_i>200) {
     li_2_res=log(psi_vec) - delta_i + li1_2_value;
   } else {
     li_2_res=log(psi_vec) - log(1+exp(delta_i)) + li1_2_value;
   }
-  
-  
+
+
   return li_2_res;
 }
 
@@ -225,7 +225,7 @@ NumericVector tau_1_func(NumericVector para_vec, double yi, double m_star, doubl
                          NumericVector confound_vec) {
   int num_conf=confound_vec.size();
   int k=(para_vec.size()-9-3*num_conf)/3;
-  
+
 
   // double beta_0=para_vec[0];
   // double beta_1=para_vec[1];
@@ -324,7 +324,7 @@ double li_1_1taxon_func(NumericVector para_vec, double yi, double m_star, double
   }
   // double li_1_value= -0.5*log(2*M_PI)-log(delta)-norm_part-log(1+exp(delta_i))-log(beta(mu*phi,(1-mu)*phi))+
   //   (mu*phi-1)*log(m_star)+((1-mu)*phi-1)*log(1-m_star);
-  
+
 
   // NumericVector beta_part=log(beta(mu*phi,(1-mu)*phi));
   //
@@ -382,10 +382,10 @@ double li_2_1taxon_func(NumericVector para_vec,double yi,double x_i,double l_i,
 
 // [[Rcpp::export]]
 double Q_theta_cpp(NumericVector para_vec_ori,NumericVector para_vec_0_ori,NumericVector yi_vec,
-                          NumericVector m_star_vec,NumericVector x_i_vec,NumericVector l_i_vec,
-                          NumericMatrix confound_mat) {
-  
-  
+                   NumericVector m_star_vec,NumericVector x_i_vec,NumericVector l_i_vec,
+                   NumericMatrix confound_mat) {
+
+
   // Rcout << "step1";
   // para_vec[5]=0;
   // para_vec_0[5]=0;
@@ -415,12 +415,15 @@ double Q_theta_cpp(NumericVector para_vec_ori,NumericVector para_vec_0_ori,Numer
     l_i=l_i_vec[i];
     NumericVector confound_vec=confound_mat(i,_);
     // Rcout << i <<"\n";
-    
+    if (m_star>0.99999) {
+      m_star=0.99999;
+    }
+
     if(m_star>1e-50) {
       li_1_value=li_1_func(para_vec,yi,m_star,x_i,confound_vec);
       tau1_value=tau_1_func(para_vec_0,yi,m_star,x_i,confound_vec);
       // Rcout << i << " " << "li_1_value " << li_1_value << " tau1_value " << tau1_value << "\n";
-      
+
       res=sum(tau1_value* test_inf(li_1_value,tau1_value));
 
     } else if (m_star<1e-50) {
@@ -431,7 +434,7 @@ double Q_theta_cpp(NumericVector para_vec_ori,NumericVector para_vec_0_ori,Numer
       tau_2_value=tau_2_func(para_vec_0,yi,x_i,l_i,confound_vec);
       res=sum(tau_2_value*test_inf(li_2_value,tau_2_value));
     } else {Rcout << "M_star less 0";}
-    
+
     // Rcout << i << " " << res << "\n";
     res_vec[i]=res;
   }
@@ -445,8 +448,8 @@ double Q_theta_cpp(NumericVector para_vec_ori,NumericVector para_vec_0_ori,Numer
 
 // [[Rcpp::export]]
 double Q_theta_cpp_nz(NumericVector para_vec_ori,NumericVector para_vec_0_ori,NumericVector yi_vec,
-                   NumericVector m_star_vec,NumericVector x_i_vec,NumericVector l_i_vec,
-                   NumericMatrix confound_mat) {
+                      NumericVector m_star_vec,NumericVector x_i_vec,NumericVector l_i_vec,
+                      NumericMatrix confound_mat) {
 
   // para_vec[5]=0;
   // para_vec_0[5]=0;
@@ -480,7 +483,9 @@ double Q_theta_cpp_nz(NumericVector para_vec_ori,NumericVector para_vec_0_ori,Nu
     x_i=x_i_vec[i];
     l_i=l_i_vec[i];
     NumericVector confound_vec=confound_mat(i,_);
-
+    if (m_star>0.99999) {
+      m_star=0.99999;
+    }
     if(m_star>1e-50) {
       li_1_value=li_1_func(para_vec,yi,m_star,x_i,confound_vec);
       tau1_value=tau_1_func(para_vec_0,yi,m_star,x_i,confound_vec);
@@ -507,8 +512,8 @@ double Q_theta_cpp_nz(NumericVector para_vec_ori,NumericVector para_vec_0_ori,Nu
 
 // [[Rcpp::export]]
 double Q_theta_cpp_nomix(NumericVector para_vec_ori ,NumericVector yi_vec,
-                      NumericVector m_star_vec,NumericVector x_i_vec,NumericVector l_i_vec,
-                      NumericMatrix confound_mat) {
+                         NumericVector m_star_vec,NumericVector x_i_vec,NumericVector l_i_vec,
+                         NumericMatrix confound_mat) {
 
   NumericVector para_vec=clone(para_vec_ori);
 
@@ -531,6 +536,10 @@ double Q_theta_cpp_nomix(NumericVector para_vec_ori ,NumericVector yi_vec,
     l_i=l_i_vec[i];
     NumericVector confound_vec=confound_mat(i,_);
 
+    if (m_star>0.99999) {
+      m_star=0.99999;
+    }
+
     if(m_star>1e-50) {
       li_1_value=li_1_1taxon_func(para_vec,yi,m_star,x_i,confound_vec);
       res=li_1_value;
@@ -543,7 +552,7 @@ double Q_theta_cpp_nomix(NumericVector para_vec_ori ,NumericVector yi_vec,
     res_vec[i]=res;
   }
 
-  // Rcout << "li_1_value "<<li_1_value<< " tau1_value " << tau1_value <<"\n";
+  // Rcout << "res_vec "<<res_vec<<"\n";
   res_sum= -sum(res_vec);
 
   return res_sum;
@@ -551,8 +560,8 @@ double Q_theta_cpp_nomix(NumericVector para_vec_ori ,NumericVector yi_vec,
 
 // [[Rcpp::export]]
 double Q_theta_cpp_nz_nomix(NumericVector para_vec_ori,NumericVector yi_vec,
-                         NumericVector m_star_vec,NumericVector x_i_vec,NumericVector l_i_vec,
-                         NumericMatrix confound_mat) {
+                            NumericVector m_star_vec,NumericVector x_i_vec,NumericVector l_i_vec,
+                            NumericMatrix confound_mat) {
 
   NumericVector para_vec=clone(para_vec_ori);
 
@@ -579,6 +588,9 @@ double Q_theta_cpp_nz_nomix(NumericVector para_vec_ori,NumericVector yi_vec,
     x_i=x_i_vec[i];
     l_i=l_i_vec[i];
     NumericVector confound_vec=confound_mat(i,_);
+    if (m_star>0.99999) {
+      m_star=0.99999;
+    }
 
     if(m_star>1e-50) {
       li_1_value=li_1_1taxon_func(para_vec,yi,m_star,x_i,confound_vec);

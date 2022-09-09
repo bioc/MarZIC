@@ -1,4 +1,4 @@
-library(MarZICM)
+library(MarZIC)
 library(SummarizedExperiment)
 library(dirmult)
 
@@ -38,7 +38,7 @@ test_dat <-
   SummarizedExperiment(assays = list(MicrobData = t(observed_RA)), colData = CovData)
 
 test_IFAA <- function() {
-  res <- MarZICM(
+  res <- MarZIC(
     Experiment_dat = test_dat,
     lib_name = "libsize",
     y_name = "Y",

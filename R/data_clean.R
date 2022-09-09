@@ -4,6 +4,7 @@ data_clean <- function(MicrobData,
                        y_name,
                        x_name,
                        conf_name,
+                       taxa_of_interest,
                        taxDropThresh,
                        taxDropCount,
                        SDThresh,
@@ -33,10 +34,26 @@ data_clean <- function(MicrobData,
     )
   }
 
+  taxon_name <- colnames(MicrobData)
+
   if (any(is.na(MicrobData), is.na(CovData))) {
-    stop("One or more taxon or covariate reads are missing. Please double check")
+    message("One or more reads are missing. Subjects with missing were removed from analysis")
+    complete_dat<-na.omit(cbind(MicrobData,CovData))
+    MicrobData <- complete_dat[,taxon_name,drop=FALSE]
+    CovData<-complete_dat[,cov_names,drop=FALSE]
   }
 
+  if (transfer_to_RA) {
+    MicrobData <- apply(MicrobData, 2, function(x) {
+      x / rowSums(MicrobData)
+    })
+  }
+
+  if (!is.null(taxa_of_interest)) {
+    MicrobData <-
+      MicrobData[, colnames(MicrobData) %in% taxa_of_interest, drop = FALSE]
+    taxon_name <- colnames(MicrobData)
+  }
 
 
   xi_vec <- CovData[, x_name]
@@ -49,15 +66,7 @@ data_clean <- function(MicrobData,
 
   nSub <- nrow(MicrobData)
   nTaxa <- ncol(MicrobData)
-  if (SDx_real < SDx) {
-    stop(x_name, " is nearly constant. Please double check.")
-  }
 
-  if (SDy_real < SDy) {
-    stop(y_name, " is nearly constant. Please double check.")
-  }
-
-  taxon_name <- colnames(MicrobData)
 
   if (length(taxon_name) < nTaxa) {
     warning("Taxon name is not available, or less than number of taxon.
@@ -65,16 +74,22 @@ data_clean <- function(MicrobData,
     colnames(MicrobData) <- paste0("rawCount", seq_len(nTaxa))
     taxon_name <- colnames(MicrobData)
   }
+
+  if (abs(SDx_real) < SDx) {
+    stop(x_name, " is nearly constant. Please double check.")
+  }
+
+  if (abs(SDy_real) < SDy) {
+    stop(y_name, " is nearly constant. Please double check.")
+  }
+
+
   too_much_zero_exc_name <- c()
   too_low_SD_exc_name <- c()
   # too_unbalanced_bin_exc_name<-c()
   # bin_x_ind <- table(xi_vec)==2
 
-  if (transfer_to_RA) {
-    MicrobData <- apply(MicrobData, 2, function(x) {
-      x / rowSums(MicrobData)
-    })
-  }
+
 
   for (i in seq_len(ncol(MicrobData))) {
     taxon_tobe_test <- MicrobData[, taxon_name[i]]
@@ -84,7 +99,7 @@ data_clean <- function(MicrobData,
       too_much_zero_exc_name <- c(too_much_zero_exc_name, taxon_name[i])
     }
     sdT <- sd(taxon_tobe_test) / mean(taxon_tobe_test)
-    if (sdT < SDThresh) {
+    if (abs(sdT) < SDThresh) {
       too_low_SD_exc_name <- c(too_low_SD_exc_name, taxon_name[i])
     }
   }
@@ -115,7 +130,7 @@ data_clean <- function(MicrobData,
     MicrobData[, !(taxon_name %in% exclude_taxon_name), drop = FALSE]
 
   conf_sd <- apply(conf_mat, 2, sd) / colMeans(conf_mat)
-  exclude_conf_name <- conf_name[conf_sd <= SDx]
+  exclude_conf_name <- conf_name[abs(conf_sd) <= SDx]
   if (length(exclude_conf_name) > 0) {
     exclude_conf_name_mes <- paste0(exclude_conf_name, " ")
     warning(
@@ -124,9 +139,10 @@ data_clean <- function(MicrobData,
     )
   }
 
-  conf_name_remain <- conf_name[conf_sd > SDx]
+  conf_name_remain <- conf_name[abs(conf_sd) > SDx]
   return(list(
     MicrobData_clean = MicrobData_clean,
-    conf_name_remain = conf_name_remain
+    conf_name_remain = conf_name_remain,
+    CovData = CovData
   ))
 }

@@ -1,1 +1,1 @@
-BiocGenerics:::testPackage("MarZICM")
+BiocGenerics:::testPackage("MarZIC")

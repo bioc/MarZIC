@@ -1,4 +1,4 @@
-# MarZICM
+# MarZIC
 
 ## Overview
 This package provides a way to calculate marginal mediation effects with microbiome data as mediators. The mediator should be compositional data or count data which will be rescaled later on, and could be zero-inflated. The marginal mediation effect will be calculated for each taxon separately.
@@ -6,7 +6,7 @@ This package provides a way to calculate marginal mediation effects with microbi
 ## Installation
 ```r
 ## From GitHub: 
-devtools::install_github("quranwu/MarZICM")
+devtools::install_github("quranwu/MarZIC")
 ```
 
 ## Usage
@@ -14,7 +14,7 @@ devtools::install_github("quranwu/MarZICM")
 The example data was built from scratch, with 200 observations and 10 taxon. 
 
 ```r
-library(MarZICM)
+library(MarZIC)
 library(SummarizedExperiment)
 library(dirmult)
 
@@ -54,7 +54,7 @@ test_dat <-
   SummarizedExperiment(assays = list(MicrobData = t(observed_RA)), colData = CovData)
 
 ## run the analysis
-res <- MarZICM(
+res <- MarZIC(
   Experiment_dat = test_dat,
   lib_name = "libsize",
   y_name = "Y",

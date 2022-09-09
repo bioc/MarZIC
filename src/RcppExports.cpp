@@ -13,7 +13,7 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 
 // li_1_func
 NumericVector li_1_func(NumericVector para_vec, double yi, double m_star, double x_i, NumericVector confound_vec);
-RcppExport SEXP _MarZICM_li_1_func(SEXP para_vecSEXP, SEXP yiSEXP, SEXP m_starSEXP, SEXP x_iSEXP, SEXP confound_vecSEXP) {
+RcppExport SEXP _MarZIC_li_1_func(SEXP para_vecSEXP, SEXP yiSEXP, SEXP m_starSEXP, SEXP x_iSEXP, SEXP confound_vecSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -28,7 +28,7 @@ END_RCPP
 }
 // Q_theta_cpp
 double Q_theta_cpp(NumericVector para_vec_ori, NumericVector para_vec_0_ori, NumericVector yi_vec, NumericVector m_star_vec, NumericVector x_i_vec, NumericVector l_i_vec, NumericMatrix confound_mat);
-RcppExport SEXP _MarZICM_Q_theta_cpp(SEXP para_vec_oriSEXP, SEXP para_vec_0_oriSEXP, SEXP yi_vecSEXP, SEXP m_star_vecSEXP, SEXP x_i_vecSEXP, SEXP l_i_vecSEXP, SEXP confound_matSEXP) {
+RcppExport SEXP _MarZIC_Q_theta_cpp(SEXP para_vec_oriSEXP, SEXP para_vec_0_oriSEXP, SEXP yi_vecSEXP, SEXP m_star_vecSEXP, SEXP x_i_vecSEXP, SEXP l_i_vecSEXP, SEXP confound_matSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -45,7 +45,7 @@ END_RCPP
 }
 // Q_theta_cpp_nz
 double Q_theta_cpp_nz(NumericVector para_vec_ori, NumericVector para_vec_0_ori, NumericVector yi_vec, NumericVector m_star_vec, NumericVector x_i_vec, NumericVector l_i_vec, NumericMatrix confound_mat);
-RcppExport SEXP _MarZICM_Q_theta_cpp_nz(SEXP para_vec_oriSEXP, SEXP para_vec_0_oriSEXP, SEXP yi_vecSEXP, SEXP m_star_vecSEXP, SEXP x_i_vecSEXP, SEXP l_i_vecSEXP, SEXP confound_matSEXP) {
+RcppExport SEXP _MarZIC_Q_theta_cpp_nz(SEXP para_vec_oriSEXP, SEXP para_vec_0_oriSEXP, SEXP yi_vecSEXP, SEXP m_star_vecSEXP, SEXP x_i_vecSEXP, SEXP l_i_vecSEXP, SEXP confound_matSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -62,7 +62,7 @@ END_RCPP
 }
 // Q_theta_cpp_nomix
 double Q_theta_cpp_nomix(NumericVector para_vec_ori, NumericVector yi_vec, NumericVector m_star_vec, NumericVector x_i_vec, NumericVector l_i_vec, NumericMatrix confound_mat);
-RcppExport SEXP _MarZICM_Q_theta_cpp_nomix(SEXP para_vec_oriSEXP, SEXP yi_vecSEXP, SEXP m_star_vecSEXP, SEXP x_i_vecSEXP, SEXP l_i_vecSEXP, SEXP confound_matSEXP) {
+RcppExport SEXP _MarZIC_Q_theta_cpp_nomix(SEXP para_vec_oriSEXP, SEXP yi_vecSEXP, SEXP m_star_vecSEXP, SEXP x_i_vecSEXP, SEXP l_i_vecSEXP, SEXP confound_matSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -78,7 +78,7 @@ END_RCPP
 }
 // Q_theta_cpp_nz_nomix
 double Q_theta_cpp_nz_nomix(NumericVector para_vec_ori, NumericVector yi_vec, NumericVector m_star_vec, NumericVector x_i_vec, NumericVector l_i_vec, NumericMatrix confound_mat);
-RcppExport SEXP _MarZICM_Q_theta_cpp_nz_nomix(SEXP para_vec_oriSEXP, SEXP yi_vecSEXP, SEXP m_star_vecSEXP, SEXP x_i_vecSEXP, SEXP l_i_vecSEXP, SEXP confound_matSEXP) {
+RcppExport SEXP _MarZIC_Q_theta_cpp_nz_nomix(SEXP para_vec_oriSEXP, SEXP yi_vecSEXP, SEXP m_star_vecSEXP, SEXP x_i_vecSEXP, SEXP l_i_vecSEXP, SEXP confound_matSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -94,15 +94,15 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_MarZICM_li_1_func", (DL_FUNC) &_MarZICM_li_1_func, 5},
-    {"_MarZICM_Q_theta_cpp", (DL_FUNC) &_MarZICM_Q_theta_cpp, 7},
-    {"_MarZICM_Q_theta_cpp_nz", (DL_FUNC) &_MarZICM_Q_theta_cpp_nz, 7},
-    {"_MarZICM_Q_theta_cpp_nomix", (DL_FUNC) &_MarZICM_Q_theta_cpp_nomix, 6},
-    {"_MarZICM_Q_theta_cpp_nz_nomix", (DL_FUNC) &_MarZICM_Q_theta_cpp_nz_nomix, 6},
+    {"_MarZIC_li_1_func", (DL_FUNC) &_MarZIC_li_1_func, 5},
+    {"_MarZIC_Q_theta_cpp", (DL_FUNC) &_MarZIC_Q_theta_cpp, 7},
+    {"_MarZIC_Q_theta_cpp_nz", (DL_FUNC) &_MarZIC_Q_theta_cpp_nz, 7},
+    {"_MarZIC_Q_theta_cpp_nomix", (DL_FUNC) &_MarZIC_Q_theta_cpp_nomix, 6},
+    {"_MarZIC_Q_theta_cpp_nz_nomix", (DL_FUNC) &_MarZIC_Q_theta_cpp_nz_nomix, 6},
     {NULL, NULL, 0}
 };
 
-RcppExport void R_init_MarZICM(DllInfo *dll) {
+RcppExport void R_init_MarZIC(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }

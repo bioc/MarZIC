@@ -2,7 +2,7 @@
 ##'
 ##' @description
 ##' \loadmathjax
-##' MarZICM is used for calculating mediation effects specifically for zero-inflated compositional
+##' MarZIC is used for calculating mediation effects specifically for zero-inflated compositional
 ##' mediators.
 ##' The marginal outcome model for taxon \mjeqn{j}{} is:
 ##' \mjdeqn{Y=\beta_0+\beta_1M_j+\beta_21_{M_j>0}+\beta_3X+\beta_4X1_{M_j>0}+\beta_5XM_j+\epsilon}{}
@@ -16,22 +16,30 @@
 ##'
 ##' @param Experiment_dat A SummarizedExperiment object containing microbiome data as assay and
 ##' covariates, outcome and library size as colData. The microbiome data could be relative abundance or absolute
-##' abundance. Missing value should be imputed in advance.
+##' abundance. Subjects with missing value will be removed during analysis.
 ##' @param lib_name      Name of library size variable within colData.
 ##' @param y_name   Name of outcome variable within colData.
 ##' @param x_name Name of covariate of interest within colData.
 ##' @param conf_name Name of confounders within colData. Defaule is NULL, meaning no confounder.
+##' @param taxa_of_interest A character vector for taxa names indicating taxa that should be analyzed. Default
+##' is NULL, meaning all taxa should be included into analysis.
 ##' @param mediator_mix_range Number of mixtures in mediator. Default is 1, meaning no mixture.
 ##' @param transfer_to_RA Logical variable indicating whether the microbiome data should be
-##' transferred to relative abundance. Default is FALSE. If TRUE, microbiome data will be rescaled
+##' transferred to relative abundance. Default is TRUE. If TRUE, microbiome data will be rescaled
 ##' by its row sum.
 ##' @param num_cores Number of CPU cores to be used in parallelization task.
 ##' @param adjust_method P value adjustment method. Same as p.adjust. Default is "fdr".
-##' @param fdr_rate FDR cutoff for significance. Default is 0.2.
+##' @param fdr_rate FDR cutoff for significance. Default is 0.05.
 ##' @param taxDropThresh The threshold of dropping taxon due to high zero percentage. Default is
 ##' 0.9, meaning taxon will be dropped for analysis if zero percentage is higher than 90\%.
 ##' @param taxDropCount The threshold of dropping taxon due to not enough non-zero observation counts.
-##' Default is 20, meaning taxon will be dropped if non-zero observation is less than 20.
+##' Default is 4 * (length(conf_name)+2), meaning taxon will be dropped if non-zero observation is less than four times
+##' of number of covariates plus 1.
+##' @param zero_prop_NIE2 The threshold of zero percentage for calculating NIE2. Default is 0.1,
+##' meaning NIE2 will be calculated for taxon with zero percentage greater than 10\%.
+##' @param zero_count_NIE2 The threshold of zero counts for calculating NIE2.
+##' Default is 4 * (length(conf_name)+2), meaning NIE2 will be calculated for taxon with zero counts
+##' greater than four times of number of covariates plus 1.
 ##' @param SDThresh The threshold of dropping taxon due to low coefficient of variation (CV)
 ##' to avoid constant taxon.
 ##' Default is 0.05, meaning any taxon has CV less than 0.05 will be dropped.
@@ -49,7 +57,7 @@
 ##' `Adjusted p value`, `Significance indicator`.
 ##'
 ##' @examples {
-##' library(MarZICM)
+##' library(MarZIC)
 ##' library(SummarizedExperiment)
 ##' library(dirmult)
 ##'
@@ -59,21 +67,26 @@
 ##' nTaxa <- 10
 ##' ## generate covariate of interest X
 ##' X <- rbinom(nSub, 1, 0.5)
+##' ## generate confounders
+##' conf1<-rnorm(nSub)
+##' conf2<-rbinom(nSub,1,0.5)
 ##' ## generate mean of each taxon. All taxon are having the same mean for simplicity.
-##' mu <- exp(-5 + X) / (1 + exp(-5 + X))
+##' mu <- exp(-5 + X + 0.1 * conf1 + 0.1 * conf2) /
+##'  (1 + exp(-5 + X + 0.1 * conf1 + 0.1 * conf2))
 ##' phi <- 10
 ##'
 ##' ## generate true RA
 ##' M_taxon<-t(sapply(mu,function(x) rdirichlet(n=1,rep(x*phi,nTaxa))))
 ##'
-##' P_zero <- exp(-3 + 0.3 * X) / (1 + exp(-3 + 0.3 * X))
+##' P_zero <- exp(-3 + 0.3 * X + 0.1 * conf1 + 0.1 * conf2) /
+##'  (1 + exp(-3 + 0.3 * X + 0.1 * conf1 + 0.1 * conf2))
 ##'
 ##' non_zero_ind <- t(sapply(P_zero,function(x) 1-rbinom(nTaxa,1,rep(x,nTaxa))))
 ##'
 ##' True_RA<-t(apply(M_taxon*non_zero_ind,1,function(x) x/sum(x)))
 ##'
 ##' ## generate outcome Y based on true RA
-##' Y <- 1 + 100 * True_RA[,1] + 5 * (True_RA[,1] > 0) + X + rnorm(nSub)
+##' Y <- 1 + 100 * True_RA[,1] + 5 * (True_RA[,1] > 0) + X + conf1 + conf2 + rnorm(nSub)
 ##'
 ##' ## library size was set to 10,000 for all subjects for simplicity.
 ##' libsize <- 10000
@@ -87,15 +100,17 @@
 ##'
 ##'
 ##' ## Construct SummerizedExperiment object
-##' CovData <- cbind(Y = Y, X = X, libsize = libsize)
+##' CovData <- cbind(Y = Y, X = X, libsize = libsize, conf1 = conf1, conf2 = conf2)
 ##' test_dat <-
 ##'   SummarizedExperiment(assays = list(MicrobData = t(observed_RA)), colData = CovData)
 ##' ## run the analysis
-##' res <- MarZICM(
+##' res <- MarZIC(
 ##'   Experiment_dat = test_dat,
 ##'   lib_name = "libsize",
 ##'   y_name = "Y",
 ##'   x_name = "X",
+##'   conf_name = c("conf1","conf2"),
+##'   taxa_of_interest = c("rawCount1","rawCount2","rawCount3"),
 ##'   num_cores = 1,
 ##'   mediator_mix_range = 1
 ##' )
@@ -119,27 +134,30 @@
 ##'
 ##'
 ##' @export
-##' @useDynLib MarZICM, .registration=TRUE
+##' @useDynLib MarZIC, .registration=TRUE
 
 
-MarZICM <- function(Experiment_dat,
+MarZIC <- function(Experiment_dat,
                     lib_name,
                     y_name,
                     x_name,
                     conf_name = NULL,
+                    taxa_of_interest = NULL,
                     mediator_mix_range = 1,
-                    transfer_to_RA = FALSE,
+                    transfer_to_RA = TRUE,
                     num_cores = detectCores() - 2,
                     adjust_method = "fdr",
-                    fdr_rate = 0.2,
+                    fdr_rate = 0.05,
                     taxDropThresh = 0.8,
-                    taxDropCount = 20,
+                    taxDropCount = 4 * (length(conf_name)+2),
+                    zero_prop_NIE2 = 0.1,
+                    zero_count_NIE2 = 4 * (length(conf_name)+2),
                     SDThresh = 0.05,
                     SDx = 0.05,
                     SDy = 0.05) {
   assay_name <- names(assays(Experiment_dat))
   MicrobData <- t(assays(Experiment_dat)[[assay_name]])
-  CovData <- colData(Experiment_dat)
+  CovData <- as.data.frame(colData(Experiment_dat))
 
   clean_dat <- data_clean(
     MicrobData = MicrobData,
@@ -148,6 +166,7 @@ MarZICM <- function(Experiment_dat,
     y_name = y_name,
     x_name = x_name,
     conf_name = conf_name,
+    taxa_of_interest = taxa_of_interest,
     taxDropThresh = taxDropThresh,
     taxDropCount = taxDropCount,
     SDThresh = SDThresh,
@@ -158,6 +177,7 @@ MarZICM <- function(Experiment_dat,
 
   MicrobData_clean <- clean_dat$MicrobData_clean
   conf_name_remain <- clean_dat$conf_name_remain
+  CovData <- clean_dat$CovData
   res_list <- suppressWarnings(
     apply_real_data_func(
       MicrobData = MicrobData_clean,
@@ -167,7 +187,9 @@ MarZICM <- function(Experiment_dat,
       x_name = x_name,
       conf_name = conf_name_remain,
       k_range = mediator_mix_range,
-      num_cores = num_cores
+      num_cores = num_cores,
+      zero_prop_NIE2 = zero_prop_NIE2,
+      zero_count_NIE2 = zero_count_NIE2
     )
   )
 

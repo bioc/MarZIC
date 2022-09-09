@@ -1,4 +1,4 @@
-Package: MarZICM
+Package: MarZIC
 Type: Package
 Title: Calculating mediation effects with zero-inflated compositional mediator
 Version: 0.99.1

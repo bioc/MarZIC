@@ -6,7 +6,9 @@ apply_real_data_func <-
            x_name,
            conf_name,
            k_range,
-           num_cores) {
+           num_cores,
+           zero_prop_NIE2 = 0.1,
+           zero_count_NIE2 = 4 * (length(conf_name) + 2)) {
     num_taxon <- ncol(MicrobData)
     num_sub <- nrow(MicrobData)
     taxon_ori_name <- colnames(MicrobData)
@@ -36,7 +38,7 @@ apply_real_data_func <-
       AIC_select <- c()
       for (k in k_range) {
         if (k == 1) {
-          if (sum(obs_m_vec == 0) > (0.1 * length(obs_m_vec))) {
+          if (sum(obs_m_vec == 0) > min(zero_prop_NIE2 * length(obs_m_vec), zero_count_NIE2)) {
             res_temp <-
               try(real_data_run_func_nomix(yi_vec, obs_m_vec, xi_vec, li_vec, conf_mat, k),
                   TRUE)
@@ -46,7 +48,7 @@ apply_real_data_func <-
                   TRUE)
           }
         } else {
-          if (sum(obs_m_vec == 0) > (0.1 * length(obs_m_vec))) {
+          if (sum(obs_m_vec == 0) > min((zero_prop_NIE2 * length(obs_m_vec)), zero_count_NIE2)) {
             res_temp <-
               try(real_data_run_func(yi_vec, obs_m_vec, xi_vec, li_vec, conf_mat, k),
                   TRUE)
