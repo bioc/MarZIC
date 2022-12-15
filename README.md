@@ -1,7 +1,8 @@
 # MarZIC
 
 ## Overview
-This package provides a way to calculate marginal mediation effects with microbiome data as mediators. The mediator should be compositional data or count data which will be rescaled later on, and could be zero-inflated. The marginal mediation effect will be calculated for each taxon separately.
+This package provides a way to estimate and test marginal mediation effects for zero-inflated compositional mediators. 
+
 
 ## Installation
 ```r
@@ -10,13 +11,13 @@ devtools::install_github("quranwu/MarZIC")
 ```
 
 ## Usage
+Detailed instructions can be found in the vignette file.
 
+## Example
 The example data was built from scratch, with 200 observations and 10 taxon. 
 
 ```r
 library(MarZIC)
-library(SummarizedExperiment)
-library(dirmult)
 
 ## A make up example with 1 taxon and 100 subjects.
 set.seed(1)
@@ -29,7 +30,7 @@ mu <- exp(-5 + X) / (1 + exp(-5 + X))
 phi <- 10
 
 ## generate true RA
-M_taxon<-t(sapply(mu,function(x) rdirichlet(n=1,rep(x*phi,nTaxa))))
+M_taxon<-t(sapply(mu,function(x) dirmult::rdirichlet(n=1,rep(x*phi,nTaxa))))
 
 P_zero <- exp(-3 + 0.3 * X) / (1 + exp(-3 + 0.3 * X))
 
@@ -51,7 +52,7 @@ colnames(observed_RA)<-paste0("rawCount",seq_len(nTaxa))
 ## Construct SummerizedExperiment object
 CovData <- cbind(Y = Y, X = X, libsize = libsize)
 test_dat <-
-  SummarizedExperiment(assays = list(MicrobData = t(observed_RA)), colData = CovData)
+  SummarizedExperiment::SummarizedExperiment(assays = list(MicrobData = t(observed_RA)), colData = CovData)
 
 ## run the analysis
 res <- MarZIC(
@@ -72,4 +73,8 @@ And the significant result could be extracted as:
 ```r
 subset(NIE1,significance == TRUE)
 ```
+
+## Reference
+Wu et al.(2022) MarZIC: A Marginal Mediation Model for Zero-Inflated Compositional Mediators with Applications to Microbiome Data. Genes 2022, 13, 1049.
+
 

@@ -21,29 +21,32 @@ BiocStyle::markdown()
 
 
 # Introduction
-MarZIC estimates and tests the marginal mediation effects of zero-inflated compositional mediators. It can be applied to microbiome studies to estimate and test the mediation effects of relative abundances (RA). MarZIC decomposes the mediation effect into two components of which one is the mediation effect induced by the continuous change on the numeric scale of the mediator and the other is the mediation effect induced by the binary change from zero to non-zero status of the mediator. For a microbiome data, let $M_j$ denote the RA of the $j$th taxon/OTU/ASV. And let $Y$, $X$ and $Z$ denote the outcome, the independent variable and confounder variable respectively, where $Z$ could contain multiple variables. The marginal outcome model for $Y$ is: 
+MarZIC estimates and tests the marginal mediation effects of zero-inflated compositional mediators. It can be applied to microbiome studies to estimate and test the marginal mediation effects of relative abundances (RA). Let $Y$, $M$ and $X$ denote the outcome, mediator (RA) and the independent variable respectively. And let $1_{(M>0)}$ denote the binary indicator variable indicating whether $M$ is positive. MarZIC decomposes the mediation effect into two components of which one is the total mediation effect going thru the continuous scale of the mediator, denoted by NIE$_1$, summing the two causal paths $X -> M -> Y$ and $X -> M -> 1_{(M>0)} -> Y$, and the other is the mediation effect going thru the binary change (from zero to non-zero status) of the mediator only $X -> 1_{(M>0)} -> Y$, denoted by NIE$_2$. For a microbiome data, let $M_j$ denote the RA of the $j$th taxon/OTU/ASV. And let $Z$ denote confounder variable (if any) and $Z$ could contain multiple variables. The marginal outcome model for $Y$ is: 
 $$
 Y=\beta_0+\beta_1M_j+\beta_21_{M_j>0}+\beta_3X+\beta_4X1_{M_j>0}+\beta_5XM_j+\beta_6Z+\epsilon
 $$
-The mean of $M_j$ depend on $X$ and $Z$ through the following equation:
+The mean of $M_j$ depends on $X$ and $Z$ through the following equation:
 $$
-\log(\frac{\mu_j}{1-\mu_j})=\alpha_0 + \alpha_1X+\alpha_2Z
+\log \Bigg(\frac{E(M_j)}{1-E(M_j)}\Bigg)=\alpha_0 + \alpha_1X+\alpha_2Z
 $$
-Let $\Delta_j=P(M_j=0)$ which is the probability of observing a structural zero (ie, true zero). We use the following logistic model for this probability:  
+Let $\Delta_j=P(M_j=0)$ which is the probability of a structural zero (ie, true zero). We use the following logistic model for this probability:  
 $$
-\log(\frac{\Delta_j}{1-\Delta_j})=\gamma_0 + \gamma_1X+\gamma_2Z
+\log\bigg(\frac{\Delta_j}{1-\Delta_j}\bigg)=\gamma_0 + \gamma_1X+\gamma_2Z
 $$
 
 # Input for MarZIC() function
+Typically, users just need to feed the first six inputs to the function: `Experiment_dat`, `lib_name`, `y_name`, `x_name`, `conf_name` and `taxa_of_interest`.
 
 - `Experiment_dat` A SummarizedExperiment object containing microbiome data, covariates (ie, independent variable and confounders), outcome and library size. The microbiome data could be relative abundance or absolute abundance. If it is absolute abundance, it will be converted into relative abundance in the analysis by default.
 - `lib_name`      Name of library size variable.
 - `y_name`   Name of outcome variable
 - `x_name` Name of covariate of interest
 - `conf_name` Name of confounders Defaule is NULL, meaning no confounder.
-- `taxa_of_interest` A character vector for taxa names indicating taxa that should be analyzed. Default is NULL, meaning all taxa should be included into analysis. 
+- `x4_inter` Whether to include the interaction term $\beta_4$. Default is TRUE.
+- `x5_inter` Whether to include the interaction term $\beta_5$. Default is TRUE.
+- `taxa_of_interest` A character vector for taxa names indicating taxa that should be analyzed. Default is "all", meaning all taxa should be included into analysis. 
 - `mediator_mix_range` Number of mixtures in mediator. Default is 1, meaning no mixture.
-- `transfer_to_RA` Logical variable indicating whether the microbiome data should be transferred into relative abundance. Default is TRUE. If FALSE, microbiome data will not be transferred.
+- `transfer_to_RA` Logical variable indicating whether the microbiome data should be transferred into relative abundance. Default is TRUE. If FALSE, microbiome data will not be transferred (e.g., if the input data is already RA data).
 - `num_cores` Number of CPU cores to be used in parallelization task.
 - `adjust_method` P value adjustment method. Same as p.adjust in R. Default is "fdr".
 - `fdr_rate` FDR cutoff for significance. Default is 0.05.
@@ -65,8 +68,6 @@ Each dataset has row representing each taxon, 6 columns for `Estimates`, `Standa
 # Example
 ```{r}
 library(MarZIC)
-library(SummarizedExperiment)
-library(dirmult)
 
 ## A make up example with 1 taxon and 100 subjects.
 set.seed(1)
@@ -84,7 +85,7 @@ mu <- exp(-5 + X + 0.1 * conf1 + 0.1 * conf2) /
 phi <- 10
 
 ## generate true RA
-M_taxon<-t(sapply(mu,function(x) rdirichlet(n=1,rep(x*phi,nTaxa))))
+M_taxon<-t(sapply(mu,function(x) dirmult::rdirichlet(n=1,rep(x*phi,nTaxa))))
 
 P_zero <- exp(-3 + 0.3 * X + 0.1 * conf1 + 0.1 * conf2) / 
   (1 + exp(-3 + 0.3 * X + 0.1 * conf1 + 0.1 * conf2))
@@ -107,11 +108,11 @@ colnames(observed_RA)<-paste0("rawCount",seq_len(nTaxa))
 ## Construct SummerizedExperiment object
 CovData <- cbind(Y = Y, X = X, libsize = libsize, conf1 = conf1, conf2 = conf2)
 test_dat <-
-  SummarizedExperiment(assays = list(MicrobData = t(observed_RA)), colData = CovData)
+  SummarizedExperiment::SummarizedExperiment(assays = list(MicrobData = t(observed_RA)), colData = CovData)
 
 ```
 Above steps could be ignored if a SummarizedExperiment object is already available. 
-Suppose we're interested in the mediation effect in `rawCount1`, `rawCount2`, and `rawCount3`, the analysis could be done as: 
+Suppose we're interested in the mediation effects of `rawCount1`, `rawCount2`, and `rawCount3`, the analysis could be done as: 
 ```{r}
 ## run the analysis
 res <- MarZIC(
@@ -127,7 +128,7 @@ res <- MarZIC(
 
 
 ```
-The Natural Indirect Effect (NIE) will be decomposed into NIE$_1$ and NIE$_2$. The output result containing 4 datasets for NIE$_1$, NIE$_2$, NDE, NIE, respectively. The NIE$_1$, for example, could be extracted by:
+The results contain 4 datasets for NIE$_1$, NIE$_2$, NDE, NIE, respectively. The NIE$_1$, for example, could be extracted by:
 ```{r}
 NIE1 <- res$NIE1_save
 ```
@@ -136,6 +137,9 @@ The significant result could be extracted by:
 subset(NIE1, significance == TRUE)
 ```
 From the result, we can find that `rawCount1` is an significant mediator of mediating the effect of $X$ on $Y$. 
+
+# Reference
+Wu et al.(2022) MarZIC: A Marginal Mediation Model for Zero-Inflated Compositional Mediators with Applications to Microbiome Data. Genes 2022, 13, 1049.
 
 
 ```{r sessionInfo, echo=FALSE}

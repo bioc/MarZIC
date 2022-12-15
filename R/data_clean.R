@@ -49,7 +49,10 @@ data_clean <- function(MicrobData,
     })
   }
 
-  if (!is.null(taxa_of_interest)) {
+  if (any(taxa_of_interest != "all")) {
+    if (!all(taxa_of_interest %in% colnames(MicrobData))) {
+      stop("one or more taxon in taxa_of_interest is not presented in data")
+    }
     MicrobData <-
       MicrobData[, colnames(MicrobData) %in% taxa_of_interest, drop = FALSE]
     taxon_name <- colnames(MicrobData)

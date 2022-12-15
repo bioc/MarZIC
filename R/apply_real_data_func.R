@@ -8,7 +8,9 @@ apply_real_data_func <-
            k_range,
            num_cores,
            zero_prop_NIE2 = 0.1,
-           zero_count_NIE2 = 4 * (length(conf_name) + 2)) {
+           zero_count_NIE2 = 4 * (length(conf_name) + 2),
+           x4_inter,
+           x5_inter) {
     num_taxon <- ncol(MicrobData)
     num_sub <- nrow(MicrobData)
     taxon_ori_name <- colnames(MicrobData)
@@ -40,21 +42,21 @@ apply_real_data_func <-
         if (k == 1) {
           if (sum(obs_m_vec == 0) > min(zero_prop_NIE2 * length(obs_m_vec), zero_count_NIE2)) {
             res_temp <-
-              try(real_data_run_func_nomix(yi_vec, obs_m_vec, xi_vec, li_vec, conf_mat, k),
+              try(real_data_run_func_nomix(yi_vec, obs_m_vec, xi_vec, li_vec, conf_mat, x4_inter, x5_inter, k),
                   TRUE)
           } else {
             res_temp <-
-              try(real_data_run_func_nz_nomix(yi_vec, obs_m_vec, xi_vec, li_vec, conf_mat, k),
+              try(real_data_run_func_nz_nomix(yi_vec, obs_m_vec, xi_vec, li_vec, conf_mat, x4_inter, x5_inter, k),
                   TRUE)
           }
         } else {
           if (sum(obs_m_vec == 0) > min((zero_prop_NIE2 * length(obs_m_vec)), zero_count_NIE2)) {
             res_temp <-
-              try(real_data_run_func(yi_vec, obs_m_vec, xi_vec, li_vec, conf_mat, k),
+              try(real_data_run_func(yi_vec, obs_m_vec, xi_vec, li_vec, conf_mat, x4_inter, x5_inter, k),
                   TRUE)
           } else {
             res_temp <-
-              try(real_data_run_func_nz(yi_vec, obs_m_vec, xi_vec, li_vec, conf_mat, k),
+              try(real_data_run_func_nz(yi_vec, obs_m_vec, xi_vec, li_vec, conf_mat, x4_inter, x5_inter, k),
                   TRUE)
           }
         }

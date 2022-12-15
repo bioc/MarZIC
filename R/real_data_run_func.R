@@ -4,6 +4,8 @@ real_data_run_func <-
            xi_vec,
            li_vec,
            confound_mat,
+           x4_inter,
+           x5_inter,
            k) {
     ini_value <- ini_bound(yi_vec, obs_m_vec, xi_vec, k)
     theta1 <- ini_value[[1]]
@@ -29,7 +31,14 @@ real_data_run_func <-
       conf_ind <- FALSE
     }
 
-
+    if (!x4_inter) {
+      theta1[5]<-0
+    }
+    
+    if (!x5_inter) {
+      theta1[6]<-0
+    }
+    
 
     theta0 <- 0
 
@@ -57,7 +66,9 @@ real_data_run_func <-
             m_star_vec = obs_m_vec,
             x_i_vec = xi_vec,
             l_i_vec = li_vec,
-            confound_mat = confound_mat
+            confound_mat = confound_mat,
+            x4_inter = x4_inter,
+            x5_inter = x5_inter
           )
         },
         A = Aeq,
@@ -104,7 +115,9 @@ real_data_run_func <-
         m_star_vec = obs_m_vec,
         x_i_vec = xi_vec,
         l_i_vec = li_vec,
-        confound_mat = confound_mat
+        confound_mat = confound_mat,
+        x4_inter = x4_inter,
+        x5_inter = x5_inter
       )
     }, as.numeric(est1$par))
 
@@ -120,7 +133,9 @@ real_data_run_func <-
             m_star_vec = obs_m_vec,
             x_i_vec = xi_vec,
             l_i_vec = li_vec,
-            confound_mat = confound_mat
+            confound_mat = confound_mat,
+            x4_inter = x4_inter,
+            x5_inter = x5_inter
           )
         },
         as.numeric(est1$par)
@@ -128,6 +143,13 @@ real_data_run_func <-
     }, as.numeric(est1$par))
 
     hess_est <- hess_mat + Jac_mat
+    
+    if (!x4_inter) {
+      diag(hess_est)[5]<-1
+    }
+    if (!x5_inter) {
+      diag(hess_est)[6]<-1
+    }
 
     t2 <- Sys.time()
 
@@ -140,7 +162,9 @@ real_data_run_func <-
         as.numeric(est1$par),
         x_1 = 0,
         x_2 = 1,
-        confound_mat = confound_mat
+        confound_mat = confound_mat,
+        x4_inter = x4_inter,
+        x5_inter = x5_inter
       )
 
     mediation_var <- function(x) {
@@ -148,7 +172,9 @@ real_data_run_func <-
         x,
         x_1 = 0,
         x_2 = 1,
-        confound_mat = confound_mat
+        confound_mat = confound_mat,
+        x4_inter = x4_inter,
+        x5_inter = x5_inter
       ))
     }
 

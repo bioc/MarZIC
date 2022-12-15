@@ -1,6 +1,7 @@
 Package: MarZIC
 Type: Package
-Title: Calculating mediation effects with zero-inflated compositional mediator
+Title: Marginal mediation effects with zero-inflated compositional
+        mediator
 Version: 0.99.1
 Authors@R: c(person(given = "Quran",
            family = "Wu",
@@ -11,16 +12,22 @@ Authors@R: c(person(given = "Quran",
            role = c("aut", "cre"),
            email = "lzg2151@gmail.com")
            )
-Description: This package provides a way to calculate marginal mediation effects with microbiome data as mediators. The mediator should be compositional data or count data which will be rescaled later on, and could be zero-inflated. The marginal mediation effect will be calculated for each taxon separately. 
+Description: This package provides a way to estimate and test marginal mediation effects for 
+             zero-inflated compositional mediators. Estimates of Natural Indirect Effect (NIE),
+             Natural Direct Effect (NDE) of each taxon, as well as their standand errors and 
+             confident intervals, were provided as outputs. Zeros will not be imputed during 
+             analysis.
 URL: https://www.mdpi.com/2073-4425/13/6/1049
 License: GPL-2
-Imports: Rcpp (>= 1.0.9), NlcOptim, S4Vectors, SummarizedExperiment, 
-         betareg, doParallel, foreach, pracma, mathjaxr, dirmult, stats, parallel
+Imports: Rcpp (>= 1.0.9), NlcOptim, S4Vectors, SummarizedExperiment,
+        betareg, doParallel, foreach, pracma, mathjaxr, dirmult, stats,
+        parallel
 Suggests: knitr, rmarkdown, RUnit, BiocGenerics, BiocStyle
 biocViews: Software, Technology, Sequencing, Microbiome
 VignetteBuilder: knitr
 RdMacros: mathjaxr
 LinkingTo: Rcpp, RcppArmadillo
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.2
 Encoding: UTF-8
-NeedsCompilation: no
+NeedsCompilation: yes
+Packaged: 2022-09-09 05:20:46 UTC; quranwu

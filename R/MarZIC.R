@@ -2,17 +2,18 @@
 ##'
 ##' @description
 ##' \loadmathjax
-##' MarZIC is used for calculating mediation effects specifically for zero-inflated compositional
-##' mediators.
-##' The marginal outcome model for taxon \mjeqn{j}{} is:
+##' MarZIC is used for calculating marginal mediation effects for zero-inflated compositional
+##' mediators. For microbiome data, the marginal outcome model for the \mjeqn{j}{}th taxon (or OTU, ASV) is:
 ##' \mjdeqn{Y=\beta_0+\beta_1M_j+\beta_21_{M_j>0}+\beta_3X+\beta_4X1_{M_j>0}+\beta_5XM_j+\epsilon}{}
-##' where \mjeqn{1_{()}}{} is indicator function
-##' X is the covariate of interest
-##' The probability of \mjeqn{M_j}{} being structure zero (\mjeqn{\Delta}{}) is:
+##' where \mjeqn{1_{()}}{} is indicator function, 
+##' X is the covariate of interest 
+##' and \mjeqn{M_j}{} is the relative abundance of the \mjeqn{j}{}th taxon. 
+##' The probability of \mjeqn{M_j}{} being structure zero (ie, true zeros) is:
 ##' \mjdeqn{\log(\frac{\Delta_j}{1-\Delta_j})=\gamma_0 + \gamma_1X}{}
-##' The mean of \mjeqn{M_j}{} in compositional structure is
+##' The mean of \mjeqn{M_j}{} in compositional structure is modeled as:
 ##' \mjdeqn{\log(\frac{\mu_j}{1-\mu_j})=\alpha_0 + \alpha_1X}{}
-##'
+##' Typically, users just need to feed the first six inputs to the function: 
+##'`Experiment_dat`, `lib_name`, `y_name`, `x_name`, `conf_name` and `taxa_of_interest`.
 ##'
 ##' @param Experiment_dat A SummarizedExperiment object containing microbiome data as assay and
 ##' covariates, outcome and library size as colData. The microbiome data could be relative abundance or absolute
@@ -21,8 +22,10 @@
 ##' @param y_name   Name of outcome variable within colData.
 ##' @param x_name Name of covariate of interest within colData.
 ##' @param conf_name Name of confounders within colData. Defaule is NULL, meaning no confounder.
+##' @param x4_inter Whether to include the interaction term \mjeqn{\beta_4}{}. Default is TRUE.
+##' @param x5_inter Whether to include the interaction term \mjeqn{\beta_5}{}. Default is TRUE.
 ##' @param taxa_of_interest A character vector for taxa names indicating taxa that should be analyzed. Default
-##' is NULL, meaning all taxa should be included into analysis.
+##' is "all", meaning all taxa should be included into analysis.
 ##' @param mediator_mix_range Number of mixtures in mediator. Default is 1, meaning no mixture.
 ##' @param transfer_to_RA Logical variable indicating whether the microbiome data should be
 ##' transferred to relative abundance. Default is TRUE. If TRUE, microbiome data will be rescaled
@@ -58,8 +61,6 @@
 ##'
 ##' @examples {
 ##' library(MarZIC)
-##' library(SummarizedExperiment)
-##' library(dirmult)
 ##'
 ##' ## A make up example with 10 taxon and 200 subjects.
 ##' set.seed(1)
@@ -76,7 +77,7 @@
 ##' phi <- 10
 ##'
 ##' ## generate true RA
-##' M_taxon<-t(sapply(mu,function(x) rdirichlet(n=1,rep(x*phi,nTaxa))))
+##' M_taxon<-t(sapply(mu,function(x) dirmult::rdirichlet(n=1,rep(x*phi,nTaxa))))
 ##'
 ##' P_zero <- exp(-3 + 0.3 * X + 0.1 * conf1 + 0.1 * conf2) /
 ##'  (1 + exp(-3 + 0.3 * X + 0.1 * conf1 + 0.1 * conf2))
@@ -102,7 +103,8 @@
 ##' ## Construct SummerizedExperiment object
 ##' CovData <- cbind(Y = Y, X = X, libsize = libsize, conf1 = conf1, conf2 = conf2)
 ##' test_dat <-
-##'   SummarizedExperiment(assays = list(MicrobData = t(observed_RA)), colData = CovData)
+##'   SummarizedExperiment::SummarizedExperiment(assays = list(MicrobData = t(observed_RA)), 
+##'   colData = CovData)
 ##' ## run the analysis
 ##' res <- MarZIC(
 ##'   Experiment_dat = test_dat,
@@ -138,27 +140,29 @@
 
 
 MarZIC <- function(Experiment_dat,
-                    lib_name,
-                    y_name,
-                    x_name,
-                    conf_name = NULL,
-                    taxa_of_interest = NULL,
-                    mediator_mix_range = 1,
-                    transfer_to_RA = TRUE,
-                    num_cores = detectCores() - 2,
-                    adjust_method = "fdr",
-                    fdr_rate = 0.05,
-                    taxDropThresh = 0.8,
-                    taxDropCount = 4 * (length(conf_name)+2),
-                    zero_prop_NIE2 = 0.1,
-                    zero_count_NIE2 = 4 * (length(conf_name)+2),
-                    SDThresh = 0.05,
-                    SDx = 0.05,
-                    SDy = 0.05) {
+                   lib_name,
+                   y_name,
+                   x_name,
+                   conf_name = NULL,
+                   x4_inter = TRUE,
+                   x5_inter = TRUE,
+                   taxa_of_interest = "all",
+                   mediator_mix_range = 1,
+                   transfer_to_RA = TRUE,
+                   num_cores = max(detectCores() - 2,1),
+                   adjust_method = "fdr",
+                   fdr_rate = 0.05,
+                   taxDropThresh = 0.8,
+                   taxDropCount = 4 * (length(conf_name) + 2),
+                   zero_prop_NIE2 = 0.1,
+                   zero_count_NIE2 = 4 * (length(conf_name) + 2),
+                   SDThresh = 0.05,
+                   SDx = 0.05,
+                   SDy = 0.05) {
   assay_name <- names(assays(Experiment_dat))
   MicrobData <- t(assays(Experiment_dat)[[assay_name]])
   CovData <- as.data.frame(colData(Experiment_dat))
-
+  
   clean_dat <- data_clean(
     MicrobData = MicrobData,
     CovData = CovData,
@@ -174,7 +178,7 @@ MarZIC <- function(Experiment_dat,
     SDy = SDy,
     transfer_to_RA = transfer_to_RA
   )
-
+  
   MicrobData_clean <- clean_dat$MicrobData_clean
   conf_name_remain <- clean_dat$conf_name_remain
   CovData <- clean_dat$CovData
@@ -189,66 +193,106 @@ MarZIC <- function(Experiment_dat,
       k_range = mediator_mix_range,
       num_cores = num_cores,
       zero_prop_NIE2 = zero_prop_NIE2,
-      zero_count_NIE2 = zero_count_NIE2
+      zero_count_NIE2 = zero_count_NIE2,
+      x4_inter = x4_inter,
+      x5_inter = x5_inter
     )
   )
-
+  
   nTaxa <- res_list$nTaxa
   nSub <- res_list$nSub
-
-  NIE1_save <- DataFrame(matrix(nrow = nTaxa, ncol = 6))
-  NIE2_save <- DataFrame(matrix(nrow = nTaxa, ncol = 6))
-  NDE_save <- DataFrame(matrix(nrow = nTaxa, ncol = 6))
-  NIE_save <- DataFrame(matrix(nrow = nTaxa, ncol = 6))
-
+  
+  NIE1_save <- DataFrame(matrix(nrow = nTaxa, ncol = 7))
+  NIE2_save <- DataFrame(matrix(nrow = nTaxa, ncol = 7))
+  NDE_save <- DataFrame(matrix(nrow = nTaxa, ncol = 7))
+  NIE_save <- DataFrame(matrix(nrow = nTaxa, ncol = 7))
+  
   rownames(NIE1_save) <-
     rownames(NIE2_save) <-
-    rownames(NDE_save) <- rownames(NIE_save) <- res_list$taxon_ori_name
-  colnames(NIE1_save) <- colnames(NIE2_save) <- colnames(NDE_save) <- colnames(NIE_save) <-
-    c("est", "se", "CI low", "CI up", "p value adj", "significance")
+    rownames(NDE_save) <-
+    rownames(NIE_save) <- res_list$taxon_ori_name
+  colnames(NIE1_save) <-
+    colnames(NIE2_save) <- colnames(NDE_save) <- colnames(NIE_save) <-
+    c("est",
+      "se",
+      "CI low",
+      "CI up",
+      "p value unadj" ,
+      "p value adj",
+      "significance")
   for (i in seq_len(length(res_list$list_save))) {
     if (is.na(res_list$list_save[[i]]$res_fin_med)[1]) {
-      NIE1_save[i, ] <- NIE2_save[i, ] <- NDE_save[i, ] <- NIE_save[i, ] <- NA
+      NIE1_save[i,] <-
+        NIE2_save[i,] <- NDE_save[i,] <- NIE_save[i,] <- NA
     } else {
       res_temp <- res_list$list_save[[i]]$res_fin_med
       NIE1_save[i, 1] <- res_temp$mediation_effect[1]
       NIE2_save[i, 1] <- res_temp$mediation_effect[2]
       NDE_save[i, 1] <- res_temp$mediation_effect[3]
       NIE_save[i, 1] <- res_temp$mediation_effect[4]
-
+      
       NIE1_save[i, 2] <- res_temp$NIE_sd[1]
       NIE2_save[i, 2] <- res_temp$NIE_sd[2]
       NDE_save[i, 2] <- res_temp$NIE_sd[3]
       NIE_save[i, 2] <- res_temp$NIE_sd[4]
-
-      NIE1_save[i, 3] <- res_temp$mediation_effect[1] - 1.96 * res_temp$NIE_sd[1]
-      NIE2_save[i, 3] <- res_temp$mediation_effect[2] - 1.96 * res_temp$NIE_sd[2]
-      NDE_save[i, 3] <- res_temp$mediation_effect[3] - 1.96 * res_temp$NIE_sd[3]
-      NIE_save[i, 3] <- res_temp$mediation_effect[4] - 1.96 * res_temp$NIE_sd[4]
-
-      NIE1_save[i, 4] <- res_temp$mediation_effect[1] + 1.96 * res_temp$NIE_sd[1]
-      NIE2_save[i, 4] <- res_temp$mediation_effect[2] + 1.96 * res_temp$NIE_sd[2]
-      NDE_save[i, 4] <- res_temp$mediation_effect[3] + 1.96 * res_temp$NIE_sd[3]
-      NIE_save[i, 4] <- res_temp$mediation_effect[4] + 1.96 * res_temp$NIE_sd[4]
+      
+      NIE1_save[i, 3] <-
+        res_temp$mediation_effect[1] - 1.96 * res_temp$NIE_sd[1]
+      NIE2_save[i, 3] <-
+        res_temp$mediation_effect[2] - 1.96 * res_temp$NIE_sd[2]
+      NDE_save[i, 3] <-
+        res_temp$mediation_effect[3] - 1.96 * res_temp$NIE_sd[3]
+      NIE_save[i, 3] <-
+        res_temp$mediation_effect[4] - 1.96 * res_temp$NIE_sd[4]
+      
+      NIE1_save[i, 4] <-
+        res_temp$mediation_effect[1] + 1.96 * res_temp$NIE_sd[1]
+      NIE2_save[i, 4] <-
+        res_temp$mediation_effect[2] + 1.96 * res_temp$NIE_sd[2]
+      NDE_save[i, 4] <-
+        res_temp$mediation_effect[3] + 1.96 * res_temp$NIE_sd[3]
+      NIE_save[i, 4] <-
+        res_temp$mediation_effect[4] + 1.96 * res_temp$NIE_sd[4]
     }
   }
-
-  NIE1_save[, 5] <- p.adjust((1 - pnorm(abs(NIE1_save[, 1] / NIE1_save[, 2]))) * 2, adjust_method)
-  NIE2_save[, 5] <- p.adjust((1 - pnorm(abs(NIE2_save[, 1] / NIE2_save[, 2]))) * 2, adjust_method)
-  NDE_save[, 5] <- p.adjust((1 - pnorm(abs(NDE_save[, 1] / NDE_save[, 2]))) * 2, adjust_method)
-  NIE_save[, 5] <- p.adjust((1 - pnorm(abs(NIE_save[, 1] / NIE_save[, 2]))) * 2, adjust_method)
-
-  NIE1_save[, 6] <- NIE1_save[, 5] < fdr_rate
-  NIE2_save[, 6] <- NIE2_save[, 5] < fdr_rate
-  NDE_save[, 6] <- NDE_save[, 5] < fdr_rate
-  NIE_save[, 6] <- NIE_save[, 5] < fdr_rate
-
+  
+  NIE1_save[, 5] <-
+    (1 - pnorm(abs(NIE1_save[, 1] / NIE1_save[, 2]))) * 2
+  NIE2_save[, 5] <-
+    (1 - pnorm(abs(NIE2_save[, 1] / NIE2_save[, 2]))) * 2
+  NDE_save[, 5] <-
+    (1 - pnorm(abs(NDE_save[, 1] / NDE_save[, 2]))) * 2
+  NIE_save[, 5] <-
+    (1 - pnorm(abs(NIE_save[, 1] / NIE_save[, 2]))) * 2
+  
+  NIE1_save[, 6] <-
+    p.adjust((1 - pnorm(abs(
+      NIE1_save[, 1] / NIE1_save[, 2]
+    ))) * 2, adjust_method)
+  NIE2_save[, 6] <-
+    p.adjust((1 - pnorm(abs(
+      NIE2_save[, 1] / NIE2_save[, 2]
+    ))) * 2, adjust_method)
+  NDE_save[, 6] <-
+    p.adjust((1 - pnorm(abs(
+      NDE_save[, 1] / NDE_save[, 2]
+    ))) * 2, adjust_method)
+  NIE_save[, 6] <-
+    p.adjust((1 - pnorm(abs(
+      NIE_save[, 1] / NIE_save[, 2]
+    ))) * 2, adjust_method)
+  
+  NIE1_save[, 7] <- NIE1_save[, 6] < fdr_rate
+  NIE2_save[, 7] <- NIE2_save[, 6] < fdr_rate
+  NDE_save[, 7] <- NDE_save[, 6] < fdr_rate
+  NIE_save[, 7] <- NIE_save[, 6] < fdr_rate
+  
   output_list <- list(
     NIE1_save = NIE1_save,
     NIE2_save = NIE2_save,
     NDE_save = NDE_save,
     NIE_save = NIE_save
   )
-
+  
   return(output_list)
 }

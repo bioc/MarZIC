@@ -60,7 +60,6 @@ NumericVector impute_small_num(NumericVector x, double del=1e-100) {
   return res;
 }
 
-// [[Rcpp::export]]
 NumericVector li_1_func(NumericVector para_vec, double yi, double m_star,
                         double x_i, NumericVector confound_vec) {
 
@@ -383,7 +382,7 @@ double li_2_1taxon_func(NumericVector para_vec,double yi,double x_i,double l_i,
 // [[Rcpp::export]]
 double Q_theta_cpp(NumericVector para_vec_ori,NumericVector para_vec_0_ori,NumericVector yi_vec,
                    NumericVector m_star_vec,NumericVector x_i_vec,NumericVector l_i_vec,
-                   NumericMatrix confound_mat) {
+                   NumericMatrix confound_mat, bool x4_inter, bool x5_inter) {
 
 
   // Rcout << "step1";
@@ -394,6 +393,14 @@ double Q_theta_cpp(NumericVector para_vec_ori,NumericVector para_vec_0_ori,Numer
   // para_vec_0[0]=0;
   NumericVector para_vec=clone(para_vec_ori);
   NumericVector para_vec_0=clone(para_vec_0_ori);
+  
+  if (!x4_inter) {
+    para_vec[4] = 0;
+  }
+  
+  if (!x5_inter) {
+    para_vec[5] = 0;
+  }
 
   double yi;
   double x_i;
@@ -449,7 +456,7 @@ double Q_theta_cpp(NumericVector para_vec_ori,NumericVector para_vec_0_ori,Numer
 // [[Rcpp::export]]
 double Q_theta_cpp_nz(NumericVector para_vec_ori,NumericVector para_vec_0_ori,NumericVector yi_vec,
                       NumericVector m_star_vec,NumericVector x_i_vec,NumericVector l_i_vec,
-                      NumericMatrix confound_mat) {
+                      NumericMatrix confound_mat, bool x4_inter, bool x5_inter) {
 
   // para_vec[5]=0;
   // para_vec_0[5]=0;
@@ -463,6 +470,14 @@ double Q_theta_cpp_nz(NumericVector para_vec_ori,NumericVector para_vec_0_ori,Nu
   para_vec[4]=0;
   para_vec[6]= -100;
   para_vec[7]=0;
+  
+  if (!x4_inter) {
+    para_vec[4] = 0;
+  }
+  
+  if (!x5_inter) {
+    para_vec[5] = 0;
+  }
 
   double yi;
   double x_i;
@@ -513,10 +528,18 @@ double Q_theta_cpp_nz(NumericVector para_vec_ori,NumericVector para_vec_0_ori,Nu
 // [[Rcpp::export]]
 double Q_theta_cpp_nomix(NumericVector para_vec_ori ,NumericVector yi_vec,
                          NumericVector m_star_vec,NumericVector x_i_vec,NumericVector l_i_vec,
-                         NumericMatrix confound_mat) {
+                         NumericMatrix confound_mat, bool x4_inter, bool x5_inter) {
 
   NumericVector para_vec=clone(para_vec_ori);
-
+  
+  if (!x4_inter) {
+    para_vec[4] = 0;
+  }
+  
+  if (!x5_inter) {
+    para_vec[5] = 0;
+  }
+  
   double yi;
   double x_i;
   double m_star;
@@ -561,7 +584,7 @@ double Q_theta_cpp_nomix(NumericVector para_vec_ori ,NumericVector yi_vec,
 // [[Rcpp::export]]
 double Q_theta_cpp_nz_nomix(NumericVector para_vec_ori,NumericVector yi_vec,
                             NumericVector m_star_vec,NumericVector x_i_vec,NumericVector l_i_vec,
-                            NumericMatrix confound_mat) {
+                            NumericMatrix confound_mat, bool x4_inter, bool x5_inter) {
 
   NumericVector para_vec=clone(para_vec_ori);
 
@@ -570,6 +593,14 @@ double Q_theta_cpp_nz_nomix(NumericVector para_vec_ori,NumericVector yi_vec,
   para_vec[6]= -100;
   para_vec[7]=0;
 
+  if (!x4_inter) {
+    para_vec[4] = 0;
+  }
+  
+  if (!x5_inter) {
+    para_vec[5] = 0;
+  }
+  
   double yi;
   double x_i;
   double m_star;

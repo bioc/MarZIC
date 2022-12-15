@@ -10,10 +10,12 @@ MarZIC(
   y_name,
   x_name,
   conf_name = NULL,
-  taxa_of_interest = NULL,
+  x4_inter = TRUE,
+  x5_inter = TRUE,
+  taxa_of_interest = "all",
   mediator_mix_range = 1,
   transfer_to_RA = TRUE,
-  num_cores = detectCores() - 2,
+  num_cores = max(detectCores() - 2, 1),
   adjust_method = "fdr",
   fdr_rate = 0.05,
   taxDropThresh = 0.8,
@@ -38,8 +40,12 @@ abundance. Subjects with missing value will be removed during analysis.}
 
 \item{conf_name}{Name of confounders within colData. Defaule is NULL, meaning no confounder.}
 
+\item{x4_inter}{Whether to include the interaction term \mjeqn{\beta_4}{}. Default is TRUE.}
+
+\item{x5_inter}{Whether to include the interaction term \mjeqn{\beta_5}{}. Default is TRUE.}
+
 \item{taxa_of_interest}{A character vector for taxa names indicating taxa that should be analyzed. Default
-is NULL, meaning all taxa should be included into analysis.}
+is "all", meaning all taxa should be included into analysis.}
 
 \item{mediator_mix_range}{Number of mixtures in mediator. Default is 1, meaning no mixture.}
 
@@ -87,22 +93,22 @@ Each dataset has row representing each taxon, 6 columns for `Estimates`, `Standa
 }
 \description{
 \loadmathjax
-MarZIC is used for calculating mediation effects specifically for zero-inflated compositional
-mediators.
-The marginal outcome model for taxon \mjeqn{j}{} is:
+MarZIC is used for calculating marginal mediation effects for zero-inflated compositional
+mediators. For microbiome data, the marginal outcome model for the \mjeqn{j}{}th taxon (or OTU, ASV) is:
 \mjdeqn{Y=\beta_0+\beta_1M_j+\beta_21_{M_j>0}+\beta_3X+\beta_4X1_{M_j>0}+\beta_5XM_j+\epsilon}{}
-where \mjeqn{1_{()}}{} is indicator function
-X is the covariate of interest
-The probability of \mjeqn{M_j}{} being structure zero (\mjeqn{\Delta}{}) is:
+where \mjeqn{1_{()}}{} is indicator function, 
+X is the covariate of interest 
+and \mjeqn{M_j}{} is the relative abundance of the \mjeqn{j}{}th taxon. 
+The probability of \mjeqn{M_j}{} being structure zero (ie, true zeros) is:
 \mjdeqn{\log(\frac{\Delta_j}{1-\Delta_j})=\gamma_0 + \gamma_1X}{}
-The mean of \mjeqn{M_j}{} in compositional structure is
+The mean of \mjeqn{M_j}{} in compositional structure is modeled as:
 \mjdeqn{\log(\frac{\mu_j}{1-\mu_j})=\alpha_0 + \alpha_1X}{}
+Typically, users just need to feed the first six inputs to the function: 
+`Experiment_dat`, `lib_name`, `y_name`, `x_name`, `conf_name` and `taxa_of_interest`.
 }
 \examples{
 {
 library(MarZIC)
-library(SummarizedExperiment)
-library(dirmult)
 
 ## A make up example with 10 taxon and 200 subjects.
 set.seed(1)
@@ -119,7 +125,7 @@ mu <- exp(-5 + X + 0.1 * conf1 + 0.1 * conf2) /
 phi <- 10
 
 ## generate true RA
-M_taxon<-t(sapply(mu,function(x) rdirichlet(n=1,rep(x*phi,nTaxa))))
+M_taxon<-t(sapply(mu,function(x) dirmult::rdirichlet(n=1,rep(x*phi,nTaxa))))
 
 P_zero <- exp(-3 + 0.3 * X + 0.1 * conf1 + 0.1 * conf2) /
  (1 + exp(-3 + 0.3 * X + 0.1 * conf1 + 0.1 * conf2))
@@ -145,7 +151,8 @@ colnames(observed_RA)<-paste0("rawCount",seq_len(nTaxa))
 ## Construct SummerizedExperiment object
 CovData <- cbind(Y = Y, X = X, libsize = libsize, conf1 = conf1, conf2 = conf2)
 test_dat <-
-  SummarizedExperiment(assays = list(MicrobData = t(observed_RA)), colData = CovData)
+  SummarizedExperiment::SummarizedExperiment(assays = list(MicrobData = t(observed_RA)), 
+  colData = CovData)
 ## run the analysis
 res <- MarZIC(
   Experiment_dat = test_dat,

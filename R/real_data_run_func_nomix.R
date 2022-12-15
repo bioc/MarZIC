@@ -4,6 +4,8 @@ real_data_run_func_nomix <-
            xi_vec,
            li_vec,
            confound_mat,
+           x4_inter,
+           x5_inter,
            k) {
     ini_value <- ini_bound_nomix(yi_vec, obs_m_vec, xi_vec, k)
     theta1 <- ini_value[[1]]
@@ -28,8 +30,15 @@ real_data_run_func_nomix <-
       confound_mat <- matrix(0, nrow = length(yi_vec), ncol = 1)
       conf_ind <- FALSE
     }
-
-
+    
+    if (!x4_inter) {
+      theta1[5]<-0
+    }
+    
+    if (!x5_inter) {
+      theta1[6]<-0
+    }
+    
     t1 <- Sys.time()
 
     est1 <- solnl(
@@ -43,7 +52,9 @@ real_data_run_func_nomix <-
           m_star_vec = obs_m_vec,
           x_i_vec = xi_vec,
           l_i_vec = li_vec,
-          confound_mat = confound_mat
+          confound_mat = confound_mat,
+          x4_inter = x4_inter,
+          x5_inter = x5_inter
         )
       },
       lb = lb_est,
@@ -67,7 +78,9 @@ real_data_run_func_nomix <-
         para_vec = as.numeric(est1$par),
         x_1 = 0,
         x_2 = 1,
-        confound_mat = confound_mat
+        confound_mat = confound_mat,
+        x4_inter = x4_inter,
+        x5_inter = x5_inter
       )
 
     mediation_var <- function(x) {
@@ -75,7 +88,9 @@ real_data_run_func_nomix <-
         x,
         x_1 = 0,
         x_2 = 1,
-        confound_mat = confound_mat
+        confound_mat = confound_mat,
+        x4_inter = x4_inter,
+        x5_inter = x5_inter
       ))
     }
 
