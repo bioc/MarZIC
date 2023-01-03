@@ -5,3 +5,9 @@
 .Rhistory
 .Ruserdata
 MarZIC.Rproj
+./man/.DS_Store
+./src/.DS_Store
+./src/MarZIC.so
+./src/Q_theta_cpp_include_nz.o
+./src/RcppExports.o
+
