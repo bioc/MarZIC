@@ -2,7 +2,7 @@ Package: MarZIC
 Type: Package
 Title: Marginal mediation effects with zero-inflated compositional
         mediator
-Version: 0.99.1
+Version: 0.99.2
 Authors@R: c(person(given = "Quran",
            family = "Wu",
            role = c("aut"),
