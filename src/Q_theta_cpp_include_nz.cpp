@@ -40,7 +40,7 @@ double expect_M_x(NumericVector psi, double delta_1, NumericVector mu) {
 
 NumericVector test_inf(NumericVector x, NumericVector tau) {
   NumericVector res_vec=clone(x);
-  LogicalVector ind_vec=(is_infinite(x) & abs(tau)<1e-8);
+  LogicalVector ind_vec=(is_infinite(x)) & (abs(tau)<1e-8);
   res_vec[ind_vec]=0;
   return res_vec;
 }
